@@ -1,0 +1,275 @@
+{
+  "entities": {
+    "VoiceNote": {
+      "title": "VoiceNote",
+      "description": "A transcribed voice journal note with AI-structured action items, contextual topic tone, and Google Search fact-checking citations.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the note owner."
+        },
+        "title": {
+          "type": "string",
+          "description": "Short descriptive title generated from the voice memo."
+        },
+        "summary": {
+          "type": "string",
+          "description": "Concise executive summary of the recording adapted to the note's topic and structure preference."
+        },
+        "transcript": {
+          "type": "string",
+          "description": "Clean transcription of the audio recording."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Journal", "Lecture", "Meeting", "Research", "Commute"],
+          "description": "Detected note category."
+        },
+        "detectedTone": {
+          "type": "string",
+          "enum": ["academic", "technical", "professional", "casual"],
+          "description": "AI-detected topic tone used for contextual summarization."
+        },
+        "durationSeconds": {
+          "type": "integer",
+          "description": "Recording duration in seconds."
+        },
+        "actionItems": {
+          "type": "array",
+          "description": "Bulleted action items extracted from the memo."
+        },
+        "completedActionIndices": {
+          "type": "array",
+          "description": "Indices of completed action items."
+        },
+        "decisions": {
+          "type": "array",
+          "description": "Key decisions, agreements, or conclusions reached in the memo or meeting."
+        },
+        "claimsToVerify": {
+          "type": "array",
+          "description": "Questions or factual claims detected in the memo for live search verification."
+        },
+        "claimVerdicts": {
+          "type": "array",
+          "description": "Structured per-claim fact-check verdicts (supported, updated, disputed, unverified) with concise explanations."
+        },
+        "factCheckSummary": {
+          "type": "string",
+          "description": "Google Search grounded fact-check summary."
+        },
+        "factCheckStatus": {
+          "type": "string",
+          "enum": ["none", "verified", "needs_review"],
+          "description": "Fact-checking status for the voice note."
+        },
+        "searchQueries": {
+          "type": "array",
+          "description": "Google Search queries executed during grounding."
+        },
+        "sources": {
+          "type": "array",
+          "description": "Verified web source links returned by Google Search grounding."
+        },
+        "flashcards": {
+          "type": "array",
+          "description": "AI-generated Q&A study flashcards derived from the note transcript and verified findings."
+        },
+        "pinned": {
+          "type": "boolean",
+          "description": "Whether the note is pinned to the top."
+        },
+        "tags": {
+          "type": "array",
+          "description": "Normalized lowercase hashtag labels (max 10, without leading #) for categorization and retrieval."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "summary",
+        "transcript",
+        "category",
+        "durationSeconds",
+        "actionItems",
+        "completedActionIndices",
+        "claimsToVerify",
+        "factCheckSummary",
+        "factCheckStatus",
+        "searchQueries",
+        "sources",
+        "pinned",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "A follow-up conversation message attached to a specific voice note.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the note owner."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["user", "model"],
+          "description": "Sender role in the note conversation."
+        },
+        "text": {
+          "type": "string",
+          "description": "Message body text."
+        },
+        "searchQueries": {
+          "type": "array",
+          "description": "Google Search queries executed for grounded assistant replies."
+        },
+        "sources": {
+          "type": "array",
+          "description": "Web citations attached to grounded assistant replies."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "role",
+        "text",
+        "createdAt"
+      ]
+    },
+    "UserPreferences": {
+      "title": "UserPreferences",
+      "description": "Synced user preferences including Brief vs Detailed note structure mode and Contextual Summarization toggle.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the preference owner."
+        },
+        "noteStructure": {
+          "type": "string",
+          "enum": ["brief", "detailed"],
+          "description": "Preferred note structure mode ('brief' or 'detailed')."
+        },
+        "contextualSummarization": {
+          "type": "boolean",
+          "description": "Whether Gemini automatically analyzes the note topic ('academic', 'technical', 'professional', 'casual') and adapts summary tone and structure."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "noteStructure",
+        "updatedAt"
+      ]
+    },
+    "FactCheckSearchItem": {
+      "title": "FactCheckSearchItem",
+      "description": "A tracked fact-check topic or search query from previous verified searches, used for auto-complete suggestions and recurring topic re-verification.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the search topic owner."
+        },
+        "query": {
+          "type": "string",
+          "description": "The exact fact-check query or claim statement."
+        },
+        "topic": {
+          "type": "string",
+          "description": "Normalized category or high-level topic title."
+        },
+        "verificationCount": {
+          "type": "integer",
+          "description": "Number of times this claim or topic has been verified."
+        },
+        "lastStatus": {
+          "type": "string",
+          "enum": ["supported", "updated", "disputed", "unverified"],
+          "description": "Verdict status from the most recent search."
+        },
+        "lastExplanation": {
+          "type": "string",
+          "description": "Concise grounded explanation from the most recent verification."
+        },
+        "sourceUrl": {
+          "type": "string",
+          "description": "Primary citation URL from previous search grounding."
+        },
+        "lastNoteId": {
+          "type": "string",
+          "description": "Optional ID of the most recent voice note associated with this fact-check."
+        },
+        "lastNoteTitle": {
+          "type": "string",
+          "description": "Optional title of the most recent voice note associated with this fact-check."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of first search."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of most recent verification."
+        }
+      },
+      "required": [
+        "userId",
+        "query",
+        "verificationCount",
+        "lastStatus",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/notes/{noteId}": {
+      "schema": {
+        "$ref": "#/entities/VoiceNote"
+      },
+      "description": "User-owned voice journal notes with transcriptions, action items, contextual tone, and search-grounded fact checks."
+    },
+    "/users/{userId}/notes/{noteId}/messages/{messageId}": {
+      "schema": {
+        "$ref": "#/entities/ChatMessage"
+      },
+      "description": "Follow-up Gemini chatbot messages scoped to a voice note."
+    },
+    "/users/{userId}/settings/{settingId}": {
+      "schema": {
+        "$ref": "#/entities/UserPreferences"
+      },
+      "description": "Synced per-user preferences including Brief vs Detailed note structure mode and Contextual Summarization toggle."
+    },
+    "/users/{userId}/fact_check_history/{historyId}": {
+      "schema": {
+        "$ref": "#/entities/FactCheckSearchItem"
+      },
+      "description": "Tracked fact-check search topics providing auto-complete suggestions and quick re-verification of recurring topics."
+    }
+  }
+}
+

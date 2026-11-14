@@ -1,0 +1,6 @@
+{
+  "name": "AudioBrain",
+  "description": "Hands-free voice journal and fact-checking assistant powered by Gemini audio transcription, Google Search grounding, and Firestore sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

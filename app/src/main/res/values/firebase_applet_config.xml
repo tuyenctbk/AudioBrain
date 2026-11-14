@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<resources>
+    <string name="firestore_database_id" translatable="false">ai-studio-android-audiobra-e5d3c39b-04a9-4080-bd83-e1bf451a8de4</string>
+    <string name="recaptcha_site_key" translatable="false">6Ldt2x0uAAAAAEEfwoPSbrfqT-HJv80YA8gHpC-c</string>
+</resources>

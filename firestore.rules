@@ -1,0 +1,253 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: deny all by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidStringList(listVal, maxItems) {
+      return listVal is list &&
+             listVal.size() <= maxItems &&
+             (listVal.size() == 0 || listVal[0] is string);
+    }
+
+    function isValidTagList(listVal, maxItems) {
+      return listVal is list &&
+             listVal.size() <= maxItems &&
+             (listVal.size() == 0 || (
+               listVal[0] is string &&
+               listVal[0].size() >= 1 &&
+               listVal[0].size() <= 32
+             ));
+    }
+
+    function isValidIntList(listVal, maxItems) {
+      return listVal is list &&
+             listVal.size() <= maxItems &&
+             (listVal.size() == 0 || listVal[0] is int);
+    }
+
+    function isValidSourceList(listVal, maxItems) {
+      return listVal is list &&
+             listVal.size() <= maxItems &&
+             (listVal.size() == 0 || (
+               listVal[0] is map &&
+               listVal[0].keys().hasAll(['title', 'url']) &&
+               listVal[0].keys().hasOnly(['title', 'url']) &&
+               listVal[0].title is string &&
+               listVal[0].title.size() <= 300 &&
+               listVal[0].url is string &&
+               listVal[0].url.size() <= 2000
+             ));
+    }
+
+    function isValidClaimVerdictList(listVal, maxItems) {
+      return listVal is list &&
+             listVal.size() <= maxItems &&
+             (listVal.size() == 0 || (
+               listVal[0] is map &&
+               listVal[0].keys().hasAll(['claim', 'status', 'explanation']) &&
+               listVal[0].keys().hasOnly(['claim', 'status', 'explanation']) &&
+               listVal[0].claim is string &&
+               listVal[0].claim.size() >= 1 &&
+               listVal[0].claim.size() <= 300 &&
+               listVal[0].status in ['supported', 'updated', 'disputed', 'unverified'] &&
+               listVal[0].explanation is string &&
+               listVal[0].explanation.size() <= 1000
+             ));
+    }
+
+    function isValidFlashcardList(listVal, maxItems) {
+      return listVal is list &&
+             listVal.size() <= maxItems &&
+             (listVal.size() == 0 || (
+               listVal[0] is map &&
+               listVal[0].keys().hasAll(['question', 'answer']) &&
+               listVal[0].keys().hasOnly(['question', 'answer']) &&
+               listVal[0].question is string &&
+               listVal[0].question.size() >= 1 &&
+               listVal[0].question.size() <= 500 &&
+               listVal[0].answer is string &&
+               listVal[0].answer.size() >= 1 &&
+               listVal[0].answer.size() <= 1000
+             ));
+    }
+
+    function isValidVoiceNote(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+             data.summary is string && data.summary.size() <= 4000 &&
+             data.transcript is string && data.transcript.size() <= 50000 &&
+             data.category in ['Journal', 'Lecture', 'Meeting', 'Research', 'Commute'] &&
+             (!('detectedTone' in data) || data.detectedTone in ['academic', 'technical', 'professional', 'casual']) &&
+             data.durationSeconds is int && data.durationSeconds >= 0 && data.durationSeconds <= 86400 &&
+             isValidStringList(data.actionItems, 30) &&
+             isValidIntList(data.completedActionIndices, 30) &&
+             (!('decisions' in data) || isValidStringList(data.decisions, 20)) &&
+             isValidStringList(data.claimsToVerify, 15) &&
+             (!('claimVerdicts' in data) || isValidClaimVerdictList(data.claimVerdicts, 15)) &&
+             data.factCheckSummary is string && data.factCheckSummary.size() <= 20000 &&
+             data.factCheckStatus in ['none', 'verified', 'needs_review'] &&
+             isValidStringList(data.searchQueries, 20) &&
+             isValidSourceList(data.sources, 20) &&
+             (!('flashcards' in data) || isValidFlashcardList(data.flashcards, 20)) &&
+             data.pinned is bool &&
+             (!('tags' in data) || isValidTagList(data.tags, 10)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidChatMessage(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.role in ['user', 'model'] &&
+             data.text is string && data.text.size() >= 1 && data.text.size() <= 30000 &&
+             (!('searchQueries' in data) || isValidStringList(data.searchQueries, 15)) &&
+             (!('sources' in data) || isValidSourceList(data.sources, 15)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidUserPreferences(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.noteStructure in ['brief', 'detailed'] &&
+             (!('contextualSummarization' in data) || data.contextualSummarization is bool) &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidFactCheckSearchItem(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.query is string && data.query.size() >= 1 && data.query.size() <= 400 &&
+             (!('topic' in data) || (data.topic is string && data.topic.size() <= 200)) &&
+             data.verificationCount is int && data.verificationCount >= 1 && data.verificationCount <= 10000 &&
+             data.lastStatus in ['supported', 'updated', 'disputed', 'unverified'] &&
+             (!('lastExplanation' in data) || (data.lastExplanation is string && data.lastExplanation.size() <= 2000)) &&
+             (!('sourceUrl' in data) || (data.sourceUrl is string && data.sourceUrl.size() <= 2000)) &&
+             (!('lastNoteId' in data) || (data.lastNoteId is string && data.lastNoteId.size() <= 100)) &&
+             (!('lastNoteTitle' in data) || (data.lastNoteTitle is string && data.lastNoteTitle.size() <= 300)) &&
+             (!('createdAt' in data) || (data.createdAt is timestamp && data.createdAt <= request.time)) &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId}/settings/{settingId} {
+      allow get: if isOwner(userId) && isValidId(settingId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(settingId) &&
+                       incoming().keys().hasAll(['userId', 'noteStructure', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'noteStructure', 'contextualSummarization', 'updatedAt']) &&
+                       isValidUserPreferences(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(settingId) &&
+                       incoming().keys().hasAll(['userId', 'noteStructure', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'noteStructure', 'contextualSummarization', 'updatedAt']) &&
+                       incoming().userId == existing().userId &&
+                       isValidUserPreferences(incoming());
+
+      allow delete: if isOwner(userId) && isValidId(settingId);
+    }
+
+    match /users/{userId}/fact_check_history/{historyId} {
+      allow get: if isOwner(userId) && isValidId(historyId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(historyId) &&
+                       incoming().keys().hasAll(['userId', 'query', 'verificationCount', 'lastStatus', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'query', 'topic', 'verificationCount', 'lastStatus', 'lastExplanation', 'sourceUrl', 'lastNoteId', 'lastNoteTitle', 'createdAt', 'updatedAt']) &&
+                       isValidFactCheckSearchItem(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(historyId) &&
+                       incoming().keys().hasAll(['userId', 'query', 'verificationCount', 'lastStatus', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'query', 'topic', 'verificationCount', 'lastStatus', 'lastExplanation', 'sourceUrl', 'lastNoteId', 'lastNoteTitle', 'createdAt', 'updatedAt']) &&
+                       incoming().userId == existing().userId &&
+                       isValidFactCheckSearchItem(incoming());
+
+      allow delete: if isOwner(userId) && isValidId(historyId);
+    }
+
+    match /users/{userId}/notes/{noteId} {
+      allow get: if isOwner(userId) && isValidId(noteId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(noteId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'title', 'summary', 'transcript', 'category',
+                         'durationSeconds', 'actionItems', 'completedActionIndices',
+                         'claimsToVerify', 'factCheckSummary', 'factCheckStatus',
+                         'searchQueries', 'sources', 'pinned', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'title', 'summary', 'transcript', 'category', 'detectedTone',
+                         'durationSeconds', 'actionItems', 'completedActionIndices',
+                         'decisions', 'claimsToVerify', 'claimVerdicts',
+                         'factCheckSummary', 'factCheckStatus', 'searchQueries',
+                         'sources', 'flashcards', 'pinned', 'tags', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidVoiceNote(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(noteId) &&
+                       isValidVoiceNote(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         // Action 1: Toggle action item completion or pin
+                         incoming().diff(existing()).affectedKeys().hasOnly(['completedActionIndices', 'pinned', 'updatedAt']) ||
+                         // Action 2: Edit note content or contextual summary/tone (title, summary, transcript, category, detectedTone, actionItems, decisions, tags)
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'summary', 'transcript', 'category', 'detectedTone', 'actionItems', 'decisions', 'claimsToVerify', 'tags', 'updatedAt']) ||
+                         // Action 3: Update fact-check results and structured claim verdicts from Google Search grounding
+                         incoming().diff(existing()).affectedKeys().hasOnly(['factCheckSummary', 'factCheckStatus', 'searchQueries', 'sources', 'claimsToVerify', 'claimVerdicts', 'updatedAt']) ||
+                         // Action 4: Update tags
+                         incoming().diff(existing()).affectedKeys().hasOnly(['tags', 'updatedAt']) ||
+                         // Action 5: Save or regenerate study flashcards
+                         incoming().diff(existing()).affectedKeys().hasOnly(['flashcards', 'updatedAt'])
+                       );
+
+      allow delete: if isOwner(userId) && isValidId(noteId);
+
+      match /messages/{messageId} {
+        allow get: if isOwner(userId) && isValidId(noteId) && isValidId(messageId);
+        allow list: if isOwner(userId) && isValidId(noteId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(noteId) &&
+                         isValidId(messageId) &&
+                         isValidChatMessage(incoming()) &&
+                         incoming().keys().hasAll(['userId', 'role', 'text', 'createdAt']) &&
+                         incoming().keys().hasOnly(['userId', 'role', 'text', 'searchQueries', 'sources', 'createdAt']) &&
+                         exists(/databases/$(database)/documents/users/$(userId)/notes/$(noteId));
+
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(noteId) && isValidId(messageId);
+      }
+    }
+  }
+}
