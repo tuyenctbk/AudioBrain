@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AudioBrain</string>
+    <string name="default_web_client_id" translatable="false"></string>
     <string name="auth_tagline">VOICE JOURNAL • LIVE FACT-CHECK</string>
     <string name="auth_headline">Think out loud.\nWe’ll structure and verify it.</string>
     <string name="auth_subheadline">Record rambling voice memos, lectures, or meetings. Gemini transcribes, extracts action items, and cross-references claims against live Google Search.</string>
@@ -12,6 +13,7 @@
     <string name="auth_error_requires_activity">Google Sign-In requires an Activity context.</string>
     <string name="auth_error_unexpected_credential">Unexpected credential type returned.</string>
     <string name="auth_error_sign_in_failed">Sign in failed. Please try again.</string>
+    <string name="auth_continue_guest">Continue as Guest (Instant Access)</string>
 
     <string name="feature_transcribe_title">Instant Voice Transcription</string>
     <string name="feature_transcribe_desc">Gemini Flash turns raw audio into clean transcripts &amp; action checklists.</string>
@@ -484,4 +486,76 @@
     <string name="export_section_factcheck">FACT-CHECK VERIFICATION</string>
     <string name="export_sources_heading">Sources:</string>
     <string name="export_section_transcript">TRANSCRIPT</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_get_started">Get Started</string>
+    <string name="onboarding_page1_badge">ACOUSTIC CAPTURE</string>
+    <string name="onboarding_page1_title">Think out loud.\nNever lose a spark.</string>
+    <string name="onboarding_page1_subtitle">Record rambling voice memos, lectures, or meetings. Gemini cleans filler words and structures every thought in seconds.</string>
+    <string name="onboarding_page1_highlight1">Background &amp; lock-screen recording</string>
+    <string name="onboarding_page1_highlight2">AI noise &amp; filler word cleanup</string>
+    <string name="onboarding_page2_badge">SEARCH GROUNDING</string>
+    <string name="onboarding_page2_title">Verify every claim\nin real time.</string>
+    <string name="onboarding_page2_subtitle">AudioBrain automatically detects dates, rules, and stats in your voice notes and cross-checks them against live Google Search.</string>
+    <string name="onboarding_page2_highlight1">Live Google Search source links</string>
+    <string name="onboarding_page2_highlight2">Confirmed, nuanced &amp; disputed verdicts</string>
+    <string name="onboarding_page3_badge">ACTION &amp; STUDY</string>
+    <string name="onboarding_page3_title">Turn voice into\ntasks &amp; flashcards.</string>
+    <string name="onboarding_page3_subtitle">Extract actionable checklists with 1-tap Calendar export, adapt summaries by tone, and study with generated flip flashcards.</string>
+    <string name="onboarding_page3_highlight1">1-tap Google Calendar task sync</string>
+    <string name="onboarding_page3_highlight2">Interactive AI study flashcard decks</string>
+    <string name="onboarding_page4_badge">STARTER PLAN</string>
+    <string name="onboarding_page4_title">Start free.\nGrow on your terms.</string>
+    <string name="onboarding_page4_subtitle">Begin with 15 AI voice memos, 10 live Search fact-checks, and 5 Cross-Note Digests every month—plus unlimited offline drafts &amp; manual notes.</string>
+    <string name="onboarding_page4_highlight1">15 AI memos + 10 fact-checks / mo free</string>
+    <string name="onboarding_page4_highlight2">Your recordings &amp; exports stay yours forever</string>
+
+    <!-- Subscription Tiers, Quota & Paywall -->
+    <string name="auth_guest_display_name">Guest Explorer</string>
+    <string name="tier_starter_free">Starter (Free)</string>
+    <string name="tier_pro">AudioBrain Pro</string>
+    <string name="quota_feature_ai_memo">AI Voice &amp; Text Memos</string>
+    <string name="quota_feature_fact_check">Live Search Fact-Checks</string>
+    <string name="quota_feature_digest">Cross-Note Digests</string>
+    <string name="paywall_title_limit_reached">Free %1$s Limit Reached</string>
+    <string name="paywall_title_upgrade">Upgrade to AudioBrain Pro</string>
+    <string name="paywall_subtitle_limit_reached">Your notes and local audio remain safe &amp; accessible forever. Unlock unlimited AI or use a free fallback below.</string>
+    <string name="paywall_subtitle_upgrade">Unlimited AI voice memos, live Google Search grounding, and cross-note digests.</string>
+    <string name="paywall_usage_header">This Month\'s Starter Usage</string>
+    <string name="paywall_pro_included_header">Included with AudioBrain Pro</string>
+    <string name="paywall_benefit_memos">Unlimited AI voice memos (up to 60 min each)</string>
+    <string name="paywall_benefit_factcheck">Unlimited Live Google Search claim verification</string>
+    <string name="paywall_benefit_digests">Unlimited Cross-Note Digests &amp; AI Study Flashcards</string>
+    <string name="paywall_benefit_sync">Priority Gemini reasoning &amp; encrypted cloud sync</string>
+    <string name="paywall_cta_trial">Start 7-Day Free Trial • $6.99/mo</string>
+    <string name="paywall_cta_bonus_credits">+3 Free Credits</string>
+    <string name="paywall_cta_save_draft">Save Audio Draft</string>
+    <string name="paywall_cta_maybe_later">Maybe Later</string>
+    <string name="quota_unlimited">Unlimited</string>
+    <string name="quota_usage_ratio">%1$d / %2$d</string>
+    <string name="settings_quota_memos">AI Memos</string>
+    <string name="settings_quota_factchecks">Live Fact-Checks</string>
+    <string name="settings_quota_digests">Cross-Note Digests</string>
+    <string name="settings_upgrade_cta">Upgrade</string>
+    <string name="settings_replay_onboarding">Replay Onboarding Tour</string>
+    <string name="snackbar_pro_activated">AudioBrain Pro activated!</string>
+    <string name="snackbar_bonus_credits_added">+3 bonus AI memo credits added!</string>
+
+    <!-- Free-Tier Playbook: Eco Lite, Soft Nudge, Value Receipt & Fallbacks -->
+    <string name="nudge_near_limit">80%% of monthly standard AI used • Resets in %1$dd %2$dh</string>
+    <string name="nudge_switch_eco_lite">Switch to Eco Lite</string>
+    <string name="eco_lite_title">Eco Lite Mode</string>
+    <string name="eco_lite_subtitle">Use fast, lightweight Gemini Flash-Lite to stretch your monthly quota 3× further</string>
+    <string name="quota_reset_countdown">Resets in %1$dd %2$dh</string>
+    <string name="quota_guest_unlock_hint">Guest trial • Sign in with Google for 15 free memos/mo</string>
+    <string name="paywall_value_receipt">This month: %1$d memos • %2$d fact-checks • %3$d digests</string>
+    <string name="paywall_cta_enable_eco_lite">Enable Eco Lite AI</string>
+    <string name="paywall_cta_sign_in_unlock">Sign in with Google (15 Free/mo)</string>
+    <string name="info_recording_cap_reached">Free-tier recording limit reached — processing your memo now.</string>
+    <string name="info_saved_local_note_no_ai">Saved as a local note (0 AI credits used).</string>
+    <string name="info_fact_check_limit_skipped">Fact-check limit reached — note saved without Search Grounding.</string>
+    <string name="snackbar_eco_lite_enabled">Eco Lite Mode enabled — quota stretches further!</string>
+    <string name="snackbar_grace_already_claimed">Monthly +3 grace credits already claimed.</string>
 </resources>

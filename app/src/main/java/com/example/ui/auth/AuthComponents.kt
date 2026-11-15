@@ -44,6 +44,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -100,8 +101,11 @@ fun attemptAutoSignIn(
         return
     }
     val clientId = try {
-        context.getString(R.string.default_web_client_id)
+        context.getString(R.string.default_web_client_id).takeIf { it.isNotBlank() }
     } catch (_: Exception) {
+        null
+    }
+    if (clientId == null) {
         onUnauthenticated()
         return
     }
@@ -118,16 +122,18 @@ fun attemptAutoSignIn(
 
     scope.launch {
         try {
-            val result = credentialManager.getCredential(context, request)
-            val credential = result.credential
-            if (credential is CustomCredential && credential.type == TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                val googleIdToken = GoogleIdTokenCredential.createFrom(credential.data).idToken
-                val authCredential = GoogleAuthProvider.getCredential(googleIdToken, null)
-                Firebase.auth.signInWithCredential(authCredential).await()
-                onAuthSuccess()
-            } else {
-                onUnauthenticated()
-            }
+            kotlinx.coroutines.withTimeoutOrNull(2500L) {
+                val result = credentialManager.getCredential(context, request)
+                val credential = result.credential
+                if (credential is CustomCredential && credential.type == TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                    val googleIdToken = GoogleIdTokenCredential.createFrom(credential.data).idToken
+                    val authCredential = GoogleAuthProvider.getCredential(googleIdToken, null)
+                    Firebase.auth.signInWithCredential(authCredential).await()
+                    onAuthSuccess()
+                } else {
+                    onUnauthenticated()
+                }
+            } ?: onUnauthenticated()
         } catch (_: Exception) {
             onUnauthenticated()
         }
@@ -143,8 +149,11 @@ fun onGoogleSignInClicked(
     onAuthCancelled: () -> Unit = {}
 ) {
     val clientId = try {
-        context.getString(R.string.default_web_client_id)
+        context.getString(R.string.default_web_client_id).takeIf { it.isNotBlank() }
     } catch (_: Exception) {
+        null
+    }
+    if (clientId == null) {
         onAuthError(context.getString(R.string.auth_error_missing_client_id))
         return
     }
@@ -449,6 +458,27 @@ fun AuthScreen(
                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
                         )
                     }
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        errorMessage = null
+                        onAuthSuccess()
+                    },
+                    enabled = !isLoading,
+                    shape = MaterialTheme.shapes.medium,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .testTag("guest_sign_in_button")
+                ) {
+                    Text(
+                        text = stringResource(R.string.auth_continue_guest),
+                        style = MaterialTheme.typography.labelLarge
+                    )
                 }
             }
         }

@@ -15,11 +15,14 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.After
+import org.junit.Assume
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.LooperMode
+import java.net.InetSocketAddress
+import java.net.Socket
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
@@ -32,6 +35,12 @@ abstract class FirestoreEmulatorTestBase {
 
     @Before
     open fun setUpFirebase() {
+        val emulatorsAvailable = isEmulatorRunning(AUTH_PORT) && isEmulatorRunning(FIRESTORE_PORT)
+        Assume.assumeTrue(
+            "Firebase emulators not running on $EMULATOR_HOST:$AUTH_PORT / $FIRESTORE_PORT",
+            emulatorsAvailable
+        )
+
         val context = ApplicationProvider.getApplicationContext<Context>()
         val resId = context.resources.getIdentifier(
             "firestore_database_id",
@@ -72,7 +81,9 @@ abstract class FirestoreEmulatorTestBase {
 
     @After
     open fun tearDownFirebase() {
-        auth.signOut()
+        if (::auth.isInitialized) {
+            auth.signOut()
+        }
     }
 
     protected suspend fun signInTestUser(email: String): String = withContext(Dispatchers.IO) {
@@ -102,5 +113,16 @@ abstract class FirestoreEmulatorTestBase {
         const val PROJECT_ID = "demo-no-project"
         const val DEFAULT_PASSWORD = "password123"
         const val AUTH_TIMEOUT_MS = 5000L
+
+        fun isEmulatorRunning(port: Int): Boolean {
+            return try {
+                Socket().use { socket ->
+                    socket.connect(InetSocketAddress(EMULATOR_HOST, port), 200)
+                    true
+                }
+            } catch (_: Exception) {
+                false
+            }
+        }
     }
 }

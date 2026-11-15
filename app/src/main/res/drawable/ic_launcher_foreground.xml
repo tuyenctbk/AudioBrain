@@ -1,8 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:width="72dp"
-        android:height="72dp"
-        android:drawable="@drawable/audiobrain_icon_fg"
-        android:gravity="center" />
-</layer-list>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Microphone Capsule (Coral Orange #EE5D2C) -->
+    <path
+        android:fillColor="#EE5D2C"
+        android:pathData="M54,28c-4.97,0 -9,4.03 -9,9v16c0,4.97 4.03,9 9,9s9,-4.03 9,-9V37c0,-4.97 -4.03,-9 -9,-9z" />
+
+    <!-- Grille Cutouts (Dark Slate #131C2D matching background) -->
+    <path
+        android:fillColor="#131C2D"
+        android:pathData="M45,39.5h4.5c0.83,0 1.5,0.67 1.5,1.5s-0.67,1.5 -1.5,1.5H45V39.5z" />
+    <path
+        android:fillColor="#131C2D"
+        android:pathData="M45,45.5h4.5c0.83,0 1.5,0.67 1.5,1.5s-0.67,1.5 -1.5,1.5H45V45.5z" />
+    <path
+        android:fillColor="#131C2D"
+        android:pathData="M63,39.5h-4.5c-0.83,0 -1.5,0.67 -1.5,1.5s0.67,1.5 1.5,1.5H63V39.5z" />
+    <path
+        android:fillColor="#131C2D"
+        android:pathData="M63,45.5h-4.5c-0.83,0 -1.5,0.67 -1.5,1.5s0.67,1.5 1.5,1.5H63V45.5z" />
+
+    <!-- Microphone Cradle & Stand (#EE5D2C) -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M40.5,51v2c0,7.46 6.04,13.5 13.5,13.5s13.5,-6.04 13.5,-13.5v-2"
+        android:strokeWidth="3.5"
+        android:strokeColor="#EE5D2C"
+        android:strokeLineCap="round" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M54,66.5v8.5"
+        android:strokeWidth="3.5"
+        android:strokeColor="#EE5D2C"
+        android:strokeLineCap="round" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M45.5,75h17"
+        android:strokeWidth="4"
+        android:strokeColor="#EE5D2C"
+        android:strokeLineCap="round" />
+
+    <!-- Inner Acoustic Waves (Verified Teal #2DD4BF) -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M34.5,38.5c-3.5,4.2 -3.5,14.8 0,19"
+        android:strokeWidth="3.2"
+        android:strokeColor="#2DD4BF"
+        android:strokeLineCap="round" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M73.5,38.5c3.5,4.2 3.5,14.8 0,19"
+        android:strokeWidth="3.2"
+        android:strokeColor="#2DD4BF"
+        android:strokeLineCap="round" />
+
+    <!-- Outer Acoustic Waves (Crisp White #FFFFFF) -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M28,33c-5.2,6.8 -5.2,23.2 0,30"
+        android:strokeWidth="3.2"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M80,33c5.2,6.8 5.2,23.2 0,30"
+        android:strokeWidth="3.2"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+</vector>

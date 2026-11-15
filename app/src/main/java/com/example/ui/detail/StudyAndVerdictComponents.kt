@@ -225,7 +225,8 @@ fun StudyFlashcardsCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f)
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.School,
@@ -266,7 +267,11 @@ fun StudyFlashcardsCard(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.action_regenerate_flashcards))
+                        Text(
+                            text = stringResource(R.string.action_regenerate_flashcards),
+                            maxLines = 1,
+                            softWrap = false
+                        )
                     }
                 }
             }

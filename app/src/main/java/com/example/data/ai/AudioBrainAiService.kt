@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.Log
 import com.example.R
 import com.example.audio.TranscriptCleaner
+import com.example.data.billing.QuotaFeature
+import com.example.data.billing.UsageQuotaManager
 import com.example.data.model.ChatMessage
 import com.example.data.model.ClaimVerdict
 import com.example.data.model.ClaimVerdictStatus
@@ -28,6 +30,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withTimeout
 import org.json.JSONObject
+import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
 
 data class MemoAnalysisResult(
     val title: String,
@@ -61,6 +65,33 @@ class AudioBrainAiService(
 ) {
 
     private val context: Context? = appContext?.applicationContext
+    private val quotaManager: UsageQuotaManager? = context?.let { UsageQuotaManager.getInstance(it) }
+
+    private data class CachedEntry(val value: Any, val timestampMs: Long)
+    private val dedupCache = ConcurrentHashMap<String, CachedEntry>()
+
+    private fun computeFingerprint(vararg parts: Any?): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        parts.forEach { part ->
+            digest.update((part?.toString() ?: "").toByteArray(Charsets.UTF_8))
+            digest.update(0.toByte())
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T : Any> getCachedResult(key: String): T? {
+        val entry = dedupCache[key] ?: return null
+        if (System.currentTimeMillis() - entry.timestampMs > AiModelConfig.DEDUP_CACHE_TTL_MS) {
+            dedupCache.remove(key)
+            return null
+        }
+        return entry.value as? T
+    }
+
+    private fun putCachedResult(key: String, value: Any) {
+        dedupCache[key] = CachedEntry(value = value, timestampMs = System.currentTimeMillis())
+    }
 
     private fun msg(resId: Int, fallback: String): String =
         context?.getString(resId) ?: fallback
@@ -171,9 +202,9 @@ class AudioBrainAiService(
         )
     }
 
-    private val transcriptionModel by lazy {
+    private fun buildTranscriptionModel(modelName: String) =
         Firebase.ai.generativeModel(
-            modelName = MODEL_FLASH,
+            modelName = modelName,
             generationConfig = generationConfig {
                 responseMimeType = "application/json"
                 responseSchema = analysisSchema
@@ -187,11 +218,13 @@ class AudioBrainAiService(
                 )
             }
         )
-    }
+
+    private val transcriptionModel by lazy { buildTranscriptionModel(AiModelConfig.PRIMARY_REASONING_MODEL) }
+    private val transcriptionLiteModel by lazy { buildTranscriptionModel(AiModelConfig.ECONOMY_LITE_MODEL) }
 
     private val verdictsStructuringModel by lazy {
         Firebase.ai.generativeModel(
-            modelName = MODEL_FLASH_LITE,
+            modelName = AiModelConfig.ECONOMY_LITE_MODEL,
             generationConfig = generationConfig {
                 responseMimeType = "application/json"
                 responseSchema = verdictsSchema
@@ -201,7 +234,7 @@ class AudioBrainAiService(
 
     private val flashcardsModel by lazy {
         Firebase.ai.generativeModel(
-            modelName = MODEL_FLASH_LITE,
+            modelName = AiModelConfig.ECONOMY_LITE_MODEL,
             generationConfig = generationConfig {
                 responseMimeType = "application/json"
                 responseSchema = flashcardsSchema
@@ -211,7 +244,7 @@ class AudioBrainAiService(
 
     private val voiceQuestionModel by lazy {
         Firebase.ai.generativeModel(
-            modelName = MODEL_FLASH_LITE,
+            modelName = AiModelConfig.ECONOMY_LITE_MODEL,
             generationConfig = generationConfig {
                 responseMimeType = "application/json"
                 responseSchema = voiceQuestionSchema
@@ -227,7 +260,7 @@ class AudioBrainAiService(
 
     private val transcriptPolishingModel by lazy {
         Firebase.ai.generativeModel(
-            modelName = MODEL_FLASH_LITE,
+            modelName = AiModelConfig.ECONOMY_LITE_MODEL,
             generationConfig = generationConfig {
                 responseMimeType = "application/json"
                 responseSchema = polishTranscriptSchema
@@ -243,7 +276,7 @@ class AudioBrainAiService(
 
     private val contextualSummaryModel by lazy {
         Firebase.ai.generativeModel(
-            modelName = MODEL_FLASH_LITE,
+            modelName = AiModelConfig.ECONOMY_LITE_MODEL,
             generationConfig = generationConfig {
                 responseMimeType = "application/json"
                 responseSchema = contextualSummarySchema
@@ -251,9 +284,9 @@ class AudioBrainAiService(
         )
     }
 
-    private val groundedModel by lazy {
+    private fun buildGroundedModel(modelName: String) =
         Firebase.ai.generativeModel(
-            modelName = MODEL_FLASH,
+            modelName = modelName,
             tools = listOf(Tool.googleSearch()),
             systemInstruction = content {
                 text(
@@ -263,7 +296,9 @@ class AudioBrainAiService(
                 )
             }
         )
-    }
+
+    private val groundedModel by lazy { buildGroundedModel(AiModelConfig.PRIMARY_REASONING_MODEL) }
+    private val groundedLiteModel by lazy { buildGroundedModel(AiModelConfig.ECONOMY_LITE_MODEL) }
 
     suspend fun analyzeAudioMemo(
         audioBytes: ByteArray,
@@ -271,14 +306,25 @@ class AudioBrainAiService(
         structureMode: NoteStructureMode = NoteStructureMode.DETAILED,
         contextualSummarization: Boolean = true
     ): Result<MemoAnalysisResult> {
+        val preferEco = quotaManager?.shouldPreferEcoModel(QuotaFeature.AI_MEMO) == true
+        val requestContent = content {
+            inlineData(audioBytes, mimeType)
+            text(buildAudioAnalysisPrompt(structureMode, contextualSummarization))
+        }
         return try {
             val response = withTimeout(AI_TIMEOUT_MS) {
-                transcriptionModel.generateContent(
-                    content {
-                        inlineData(audioBytes, mimeType)
-                        text(buildAudioAnalysisPrompt(structureMode, contextualSummarization))
+                try {
+                    val primary = if (preferEco) transcriptionLiteModel else transcriptionModel
+                    primary.generateContent(requestContent)
+                } catch (e: Exception) {
+                    if (!preferEco && AiModelConfig.isRateLimitOrQuotaError(e)) {
+                        Log.w(TAG, "Primary audio model rate-limited; cascading to Economy Lite", e)
+                        quotaManager?.recordFallbackCascade()
+                        transcriptionLiteModel.generateContent(requestContent)
+                    } else {
+                        throw e
                     }
-                )
+                }
             }
             val jsonText = response.text
                 ?: return Result.failure(
@@ -305,13 +351,24 @@ class AudioBrainAiService(
         structureMode: NoteStructureMode = NoteStructureMode.DETAILED,
         contextualSummarization: Boolean = true
     ): Result<MemoAnalysisResult> {
+        val preferEco = quotaManager?.shouldPreferEcoModel(QuotaFeature.AI_MEMO) == true
+        val requestContent = content {
+            text("${buildTextAnalysisPrompt(structureMode, contextualSummarization)}\n\nMemo text:\n$memoText")
+        }
         return try {
             val response = withTimeout(AI_TIMEOUT_MS) {
-                transcriptionModel.generateContent(
-                    content {
-                        text("${buildTextAnalysisPrompt(structureMode, contextualSummarization)}\n\nMemo text:\n$memoText")
+                try {
+                    val primary = if (preferEco) transcriptionLiteModel else transcriptionModel
+                    primary.generateContent(requestContent)
+                } catch (e: Exception) {
+                    if (!preferEco && AiModelConfig.isRateLimitOrQuotaError(e)) {
+                        Log.w(TAG, "Primary text model rate-limited; cascading to Economy Lite", e)
+                        quotaManager?.recordFallbackCascade()
+                        transcriptionLiteModel.generateContent(requestContent)
+                    } else {
+                        throw e
                     }
-                )
+                }
             }
             val jsonText = response.text
                 ?: return Result.failure(
@@ -442,9 +499,26 @@ class AudioBrainAiService(
         prompt: String,
         claims: List<String>
     ): Result<FactCheckResult> {
+        val cacheKey = computeFingerprint("fact_check", prompt, claims.joinToString("|"))
+        getCachedResult<FactCheckResult>(cacheKey)?.let { cached ->
+            Log.d(TAG, "Returning 40s deduplicated fact-check result (0 tokens)")
+            return Result.success(cached)
+        }
+        val preferEco = quotaManager?.shouldPreferEcoModel(QuotaFeature.FACT_CHECK) == true
         return try {
             val response = withTimeout(AI_TIMEOUT_MS) {
-                groundedModel.generateContent(prompt)
+                try {
+                    val primary = if (preferEco) groundedLiteModel else groundedModel
+                    primary.generateContent(prompt)
+                } catch (e: Exception) {
+                    if (!preferEco && AiModelConfig.isRateLimitOrQuotaError(e)) {
+                        Log.w(TAG, "Primary grounded model rate-limited; cascading to Economy Lite", e)
+                        quotaManager?.recordFallbackCascade()
+                        groundedLiteModel.generateContent(prompt)
+                    } else {
+                        throw e
+                    }
+                }
             }
             val text = response.text?.trim().orEmpty()
             if (text.isBlank()) {
@@ -459,15 +533,15 @@ class AudioBrainAiService(
                 groundedFindings = text,
                 hasSources = sources.isNotEmpty()
             )
-            Result.success(
-                FactCheckResult(
-                    summary = text,
-                    status = status,
-                    searchQueries = queries,
-                    sources = sources,
-                    verdicts = structuredVerdicts
-                )
+            val result = FactCheckResult(
+                summary = text,
+                status = status,
+                searchQueries = queries,
+                sources = sources,
+                verdicts = structuredVerdicts
             )
+            putCachedResult(cacheKey, result)
+            Result.success(result)
         } catch (e: TimeoutCancellationException) {
             Log.e(TAG, "Google Search fact-check timed out", e)
             Result.failure(
@@ -679,13 +753,14 @@ class AudioBrainAiService(
         val chatHistory = buildList {
             add(content("user") { text("Use this voice note as context for our conversation:\n$contextSeed") })
             add(content("model") { text("Got it. I have the full transcript, decisions, action items, and fact-check notes ready. How can I help?") })
-            history.takeLast(14).forEach { msg ->
+            history.takeLast(AiModelConfig.CHAT_SLIDING_WINDOW_TURNS).forEach { msg ->
                 val role = if (msg.role == "user") "user" else "model"
                 add(content(role) { text(msg.text) })
             }
         }
 
-        val chat = groundedModel.startChat(history = chatHistory)
+        val activeModel = if (quotaManager?.shouldPreferEcoModel() == true) groundedLiteModel else groundedModel
+        val chat = activeModel.startChat(history = chatHistory)
         val accumulatedText = StringBuilder()
         val collectedQueries = linkedSetOf<String>()
         val collectedSources = linkedMapOf<String, FactSource>()
@@ -713,14 +788,13 @@ class AudioBrainAiService(
         if (finalText.isBlank()) {
             throw IllegalStateException(msg(R.string.err_ai_chat_empty, "Gemini returned an empty chat response."))
         }
-        emit(
-            ChatStreamUpdate(
-                text = finalText,
-                searchQueries = collectedQueries.toList(),
-                sources = collectedSources.values.toList(),
-                isComplete = true
-            )
+        val finalUpdate = ChatStreamUpdate(
+            text = finalText,
+            searchQueries = collectedQueries.toList(),
+            sources = collectedSources.values.toList(),
+            isComplete = true
         )
+        emit(finalUpdate)
     }
 
     fun streamJournalDigest(
@@ -762,12 +836,25 @@ class AudioBrainAiService(
             append(notesContext)
         }
 
+        val cacheKey = computeFingerprint("digest", focusPrompt, selectedNotes.joinToString(",") { "${it.id}:${it.updatedAt}" })
+        getCachedResult<ChatStreamUpdate>(cacheKey)?.let { cached ->
+            Log.d(TAG, "Returning 40s deduplicated digest result (0 tokens)")
+            emit(cached)
+            return@flow
+        }
+
+        val activeModel = if (quotaManager?.shouldPreferEcoModel(QuotaFeature.DIGEST) == true) {
+            groundedLiteModel
+        } else {
+            groundedModel
+        }
+
         val accumulatedText = StringBuilder()
         val collectedQueries = linkedSetOf<String>()
         val collectedSources = linkedMapOf<String, FactSource>()
 
         withTimeout(AI_TIMEOUT_MS) {
-            groundedModel.generateContentStream(prompt).collect { chunk ->
+            activeModel.generateContentStream(prompt).collect { chunk ->
                 val chunkText = chunk.text.orEmpty()
                 accumulatedText.append(chunkText)
                 val (queries, sources) = extractGrounding(chunk)
@@ -789,14 +876,14 @@ class AudioBrainAiService(
         if (finalText.isBlank()) {
             throw IllegalStateException(msg(R.string.err_ai_digest_empty, "Gemini returned an empty digest."))
         }
-        emit(
-            ChatStreamUpdate(
-                text = finalText,
-                searchQueries = collectedQueries.toList(),
-                sources = collectedSources.values.toList(),
-                isComplete = true
-            )
+        val finalUpdate = ChatStreamUpdate(
+            text = finalText,
+            searchQueries = collectedQueries.toList(),
+            sources = collectedSources.values.toList(),
+            isComplete = true
         )
+        putCachedResult(cacheKey, finalUpdate)
+        emit(finalUpdate)
     }
 
     private fun parseAnalysisJson(jsonString: String): MemoAnalysisResult {
@@ -883,8 +970,6 @@ class AudioBrainAiService(
 
     companion object {
         private const val TAG = "AudioBrainAiService"
-        private const val MODEL_FLASH = "gemini-3.8-flash"
-        private const val MODEL_FLASH_LITE = "gemini-3.5-flash-lite"
         private const val AI_TIMEOUT_MS = 60_000L
 
         private fun buildStructureInstruction(structureMode: NoteStructureMode): String {

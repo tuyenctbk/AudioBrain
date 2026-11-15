@@ -152,6 +152,21 @@ service cloud.firestore {
              data.updatedAt is timestamp && data.updatedAt <= request.time;
     }
 
+    function isValidUsageQuota(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.periodIso is string && data.periodIso.size() >= 6 && data.periodIso.size() <= 16 &&
+             data.tier is string && data.tier in ['FREE', 'PRO'] &&
+             data.aiMemosUsed is int && data.aiMemosUsed >= 0 &&
+             data.factChecksUsed is int && data.factChecksUsed >= 0 &&
+             data.digestsUsed is int && data.digestsUsed >= 0 &&
+             data.bonusCredits is int && data.bonusCredits >= 0 &&
+             data.graceClaimed is bool &&
+             data.ecoLiteMode is bool &&
+             data.fallbackCascadeCount is int && data.fallbackCascadeCount >= 0 &&
+             data.updatedAt is int && data.updatedAt >= 0;
+    }
+
     match /users/{userId}/settings/{settingId} {
       allow get: if isOwner(userId) && isValidId(settingId);
       allow list: if isOwner(userId);
@@ -190,6 +205,46 @@ service cloud.firestore {
                        isValidFactCheckSearchItem(incoming());
 
       allow delete: if isOwner(userId) && isValidId(historyId);
+    }
+
+    match /users/{userId}/usageQuota/{periodId} {
+      allow get: if isOwner(userId) && isValidId(periodId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(periodId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'periodIso', 'tier', 'aiMemosUsed',
+                         'factChecksUsed', 'digestsUsed', 'bonusCredits',
+                         'graceClaimed', 'ecoLiteMode', 'fallbackCascadeCount',
+                         'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'periodIso', 'tier', 'aiMemosUsed',
+                         'factChecksUsed', 'digestsUsed', 'bonusCredits',
+                         'graceClaimed', 'ecoLiteMode', 'fallbackCascadeCount',
+                         'updatedAt'
+                       ]) &&
+                       isValidUsageQuota(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(periodId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'periodIso', 'tier', 'aiMemosUsed',
+                         'factChecksUsed', 'digestsUsed', 'bonusCredits',
+                         'graceClaimed', 'ecoLiteMode', 'fallbackCascadeCount',
+                         'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'periodIso', 'tier', 'aiMemosUsed',
+                         'factChecksUsed', 'digestsUsed', 'bonusCredits',
+                         'graceClaimed', 'ecoLiteMode', 'fallbackCascadeCount',
+                         'updatedAt'
+                       ]) &&
+                       incoming().userId == existing().userId &&
+                       isValidUsageQuota(incoming());
+
+      allow delete: if isOwner(userId) && isValidId(periodId);
     }
 
     match /users/{userId}/notes/{noteId} {

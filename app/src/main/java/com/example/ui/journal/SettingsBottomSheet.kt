@@ -23,11 +23,16 @@ import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.automirrored.rounded.Subject
 import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.CloudDone
+import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.TravelExplore
+import androidx.compose.material.icons.rounded.WorkspacePremium
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -37,21 +42,27 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.R
+import com.example.data.billing.SubscriptionTier
+import com.example.data.billing.UsageQuotaSnapshot
 import com.example.data.model.NoteStructureMode
 import com.example.data.model.NoteTopicTone
+import com.example.ui.billing.QuotaProgressRow
 import com.example.ui.common.displayLabelRes
+import com.example.ui.theme.StudioAmber
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -61,6 +72,10 @@ fun SettingsBottomSheet(
     autoFactCheck: Boolean,
     userDisplayName: String?,
     userEmail: String?,
+    quotaState: UsageQuotaSnapshot = UsageQuotaSnapshot(),
+    onToggleEcoLiteMode: (Boolean) -> Unit = {},
+    onOpenPaywall: () -> Unit = {},
+    onReplayOnboarding: () -> Unit = {},
     onSelectNoteStructure: (NoteStructureMode) -> Unit,
     onToggleContextualSummarization: (Boolean) -> Unit,
     onToggleAutoFactCheck: (Boolean) -> Unit,
@@ -312,6 +327,151 @@ fun SettingsBottomSheet(
                             .testTag("settings_auto_factcheck_switch")
                     )
                 }
+            }
+
+            // Eco Lite Mode Card
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                shape = MaterialTheme.shapes.medium,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Bolt,
+                        contentDescription = null,
+                        tint = StudioAmber,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.eco_lite_title),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(R.string.eco_lite_subtitle),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = quotaState.ecoLiteMode,
+                        onCheckedChange = onToggleEcoLiteMode,
+                        modifier = Modifier
+                            .minimumInteractiveComponentSize()
+                            .testTag("settings_eco_lite_switch")
+                    )
+                }
+            }
+
+            // Plan & Monthly Quota Card
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                shape = MaterialTheme.shapes.medium,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val countdown = quotaState.resetCountdown()
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.WorkspacePremium,
+                                contentDescription = null,
+                                tint = StudioAmber,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Column {
+                                Text(
+                                    text = stringResource(quotaState.tier.displayNameRes),
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                if (quotaState.tier == SubscriptionTier.FREE) {
+                                    Text(
+                                        text = if (quotaState.isGuest) {
+                                            stringResource(R.string.quota_guest_unlock_hint)
+                                        } else {
+                                            stringResource(R.string.quota_reset_countdown, countdown.days, countdown.hours)
+                                        },
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                        if (quotaState.tier == SubscriptionTier.FREE) {
+                            Button(
+                                onClick = {
+                                    onDismiss()
+                                    onOpenPaywall()
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = StudioAmber,
+                                    contentColor = Color.White
+                                ),
+                                modifier = Modifier.height(34.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.settings_upgrade_cta),
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                                )
+                            }
+                        }
+                    }
+
+                    QuotaProgressRow(
+                        label = stringResource(R.string.settings_quota_memos),
+                        used = quotaState.aiMemosUsed,
+                        limit = quotaState.effectiveAiMemoLimit
+                    )
+                    QuotaProgressRow(
+                        label = stringResource(R.string.settings_quota_factchecks),
+                        used = quotaState.factChecksUsed,
+                        limit = quotaState.limits.maxFactChecksPerMonth
+                    )
+                    QuotaProgressRow(
+                        label = stringResource(R.string.settings_quota_digests),
+                        used = quotaState.digestsUsed,
+                        limit = quotaState.limits.maxDigestsPerMonth
+                    )
+                }
+            }
+
+            TextButton(
+                onClick = {
+                    onDismiss()
+                    onReplayOnboarding()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("settings_replay_onboarding_button")
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Explore,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.settings_replay_onboarding))
             }
 
             OutlinedButton(

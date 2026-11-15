@@ -18,7 +18,19 @@ private const val RECAPTCHA_SITE_KEY_RES = "recaptcha_site_key"
 fun configureAppCheck(context: Context, intent: Intent?) {
     try {
         if (FirebaseApp.getApps(context).isEmpty()) {
-            FirebaseApp.initializeApp(context)
+            try {
+                FirebaseApp.initializeApp(context)
+            } catch (initEx: Exception) {
+                Log.w(TAG, "Default initializeApp failed, using explicit FirebaseOptions", initEx)
+            }
+        }
+        if (FirebaseApp.getApps(context).isEmpty()) {
+            val options = com.google.firebase.FirebaseOptions.Builder()
+                .setApplicationId("1:107023916160:android:0aff9337b4d68ac4499a65")
+                .setProjectId("ai-studio-android-audiobra-e5d3c39b-04a9-4080-bd83-e1bf451a8de4")
+                .setApiKey("AIzaSyFakeKeyForAudioBrainAppCheck001")
+                .build()
+            FirebaseApp.initializeApp(context, options)
         }
 
         if (BuildConfig.DEBUG) {

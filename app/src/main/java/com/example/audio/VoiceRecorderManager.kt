@@ -352,40 +352,47 @@ class VoiceRecorderManager(context: Context) {
 
     private fun requestRecordingAudioFocus() {
         val manager = audioManager ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val attrs = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                .build()
-            val req = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
-                .setAudioAttributes(attrs)
-                .setWillPauseWhenDucked(true)
-                .build()
-            audioFocusRequest = req
-            runCatching { manager.requestAudioFocus(req) }
-        } else {
-            @Suppress("DEPRECATION")
-            runCatching {
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val attrs = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build()
+                val req = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
+                    .setAudioAttributes(attrs)
+                    .setOnAudioFocusChangeListener { /* handle transient focus change if needed */ }
+                    .build()
+                audioFocusRequest = req
+                manager.requestAudioFocus(req)
+            } else {
+                @Suppress("DEPRECATION")
                 manager.requestAudioFocus(
                     null,
-                    AudioManager.STREAM_MUSIC,
+                    AudioManager.STREAM_VOICE_CALL,
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE
                 )
             }
+        }.onFailure { e ->
+            Log.w(TAG, "Failed to request audio focus for recording: ${e.message}")
         }
     }
 
     private fun abandonRecordingAudioFocus() {
         val manager = audioManager ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            audioFocusRequest?.let { req ->
-                runCatching { manager.abandonAudioFocusRequest(req) }
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                audioFocusRequest?.let { req ->
+                    manager.abandonAudioFocusRequest(req)
+                }
+                audioFocusRequest = null
+            } else {
+                @Suppress("DEPRECATION")
+                manager.abandonAudioFocus(null)
             }
-            audioFocusRequest = null
-        } else {
-            @Suppress("DEPRECATION")
-            runCatching { manager.abandonAudioFocus(null) }
+        }.onFailure { e ->
+            Log.w(TAG, "Failed to abandon audio focus: ${e.message}")
         }
+        audioFocusRequest = null
     }
 
     private fun cleanupRecorder() {

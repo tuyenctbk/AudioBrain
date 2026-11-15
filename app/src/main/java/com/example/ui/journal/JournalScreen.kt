@@ -66,6 +66,7 @@ import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.rounded.AudioFile
 import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DeleteOutline
@@ -140,6 +141,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ExternalLaunchCommand
 import com.example.R
+import com.example.data.billing.QuotaFeature
+import com.example.data.billing.SubscriptionTier
+import com.example.ui.billing.PaywallBottomSheet
 import com.example.audio.RecordingState
 import com.example.data.export.NoteMarkdownExporter
 import com.example.data.export.TaskActionUtils
@@ -154,6 +158,7 @@ import com.example.ui.common.NoteTagPill
 import com.example.ui.common.displayLabelRes
 import com.example.ui.common.localizedCategoryLabel
 import com.example.ui.common.localizedTimestamp
+import com.example.ui.theme.StudioAmber
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -203,6 +208,9 @@ fun JournalScreen(
     val contextualSummarization by viewModel.contextualSummarization.collectAsStateWithLifecycle()
     val reverifyingNoteIds by viewModel.reverifyingNoteIds.collectAsStateWithLifecycle()
     val searchHistory by viewModel.searchHistory.collectAsStateWithLifecycle()
+    val quotaState by viewModel.quotaState.collectAsStateWithLifecycle()
+    val showPaywall by viewModel.showPaywall.collectAsStateWithLifecycle()
+    val paywallFeature by viewModel.paywallFeature.collectAsStateWithLifecycle()
 
     var showTypeMemoSheet by remember { mutableStateOf(false) }
     var initialTypedMemo by remember { mutableStateOf("") }
@@ -284,21 +292,80 @@ fun JournalScreen(
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
-            StudioCaptureSheet(
-                captureState = captureState,
-                recordingState = recordingState,
-                onStartRecording = handleStartRecordClick,
-                onTogglePauseRecording = viewModel::togglePauseRecording,
-                onStopRecording = viewModel::stopAndProcessRecording,
-                onSaveDraft = viewModel::stopAndSaveForLater,
-                onCancelRecording = viewModel::cancelRecording,
-                onOpenTypeMemo = {
-                    initialTypedMemo = ""
-                    showTypeMemoSheet = true
-                },
-                onImportAudio = { audioImportLauncher.launch(arrayOf("audio/*")) },
-                onToggleAutoFactCheck = viewModel::setAutoFactCheck
-            )
+            Column(modifier = Modifier.fillMaxWidth()) {
+                AnimatedVisibility(
+                    visible = quotaState.tier == SubscriptionTier.FREE &&
+                        !quotaState.ecoLiteMode &&
+                        quotaState.anyNearLimit()
+                ) {
+                    val countdown = quotaState.resetCountdown()
+                    Surface(
+                        color = StudioAmber.copy(alpha = 0.14f),
+                        border = BorderStroke(1.dp, StudioAmber.copy(alpha = 0.45f)),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Bolt,
+                                contentDescription = null,
+                                tint = StudioAmber,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.nudge_near_limit,
+                                    countdown.days,
+                                    countdown.hours
+                                ),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextButton(
+                                onClick = {
+                                    viewModel.setEcoLiteMode(true)
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            context.getString(R.string.snackbar_eco_lite_enabled)
+                                        )
+                                    }
+                                },
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.nudge_switch_eco_lite),
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = StudioAmber
+                                )
+                            }
+                        }
+                    }
+                }
+                StudioCaptureSheet(
+                    captureState = captureState,
+                    recordingState = recordingState,
+                    onStartRecording = handleStartRecordClick,
+                    onTogglePauseRecording = viewModel::togglePauseRecording,
+                    onStopRecording = viewModel::stopAndProcessRecording,
+                    onSaveDraft = viewModel::stopAndSaveForLater,
+                    onCancelRecording = viewModel::cancelRecording,
+                    onOpenTypeMemo = {
+                        initialTypedMemo = ""
+                        showTypeMemoSheet = true
+                    },
+                    onImportAudio = { audioImportLauncher.launch(arrayOf("audio/*")) },
+                    onToggleAutoFactCheck = viewModel::setAutoFactCheck
+                )
+            }
         }
     ) { innerPadding ->
         Column(
@@ -573,6 +640,10 @@ fun JournalScreen(
             autoFactCheck = captureState.autoFactCheck,
             userDisplayName = userDisplayName,
             userEmail = userEmail,
+            quotaState = quotaState,
+            onToggleEcoLiteMode = viewModel::setEcoLiteMode,
+            onOpenPaywall = { viewModel.openPaywall(null) },
+            onReplayOnboarding = viewModel::replayOnboarding,
             onSelectNoteStructure = { mode ->
                 viewModel.setNoteStructureMode(mode)
             },
@@ -580,6 +651,50 @@ fun JournalScreen(
             onToggleAutoFactCheck = viewModel::setAutoFactCheck,
             onSignOutClick = onSignOutClick,
             onDismiss = { showSettingsSheet = false }
+        )
+    }
+
+    if (showPaywall) {
+        PaywallBottomSheet(
+            quotaState = quotaState,
+            triggeredFeature = paywallFeature,
+            onUpgradeToPro = {
+                viewModel.upgradeToPro()
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(context.getString(R.string.snackbar_pro_activated))
+                }
+            },
+            onClaimBonusCredits = {
+                val granted = viewModel.claimBonusCredits()
+                coroutineScope.launch {
+                    val msg = if (granted) {
+                        context.getString(R.string.snackbar_bonus_credits_added)
+                    } else {
+                        context.getString(R.string.snackbar_grace_already_claimed)
+                    }
+                    snackbarHostState.showSnackbar(msg)
+                }
+            },
+            onEnableEcoLite = {
+                viewModel.setEcoLiteMode(true)
+                viewModel.dismissPaywall()
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(context.getString(R.string.snackbar_eco_lite_enabled))
+                }
+            },
+            onSignInWithGoogle = if (quotaState.isGuest) {
+                {
+                    viewModel.dismissPaywall()
+                    onSignOutClick()
+                }
+            } else null,
+            onSaveOfflineFallback = if (paywallFeature == QuotaFeature.AI_MEMO) {
+                {
+                    viewModel.dismissPaywall()
+                    showTypeMemoSheet = true
+                }
+            } else null,
+            onDismiss = viewModel::dismissPaywall
         )
     }
 
@@ -1188,9 +1303,9 @@ private fun VoiceNoteCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Surface(
@@ -1201,6 +1316,8 @@ private fun VoiceNoteCard(
                             text = localizedCategoryLabel(note.category).uppercase(Locale.getDefault()),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            softWrap = false,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
@@ -1213,6 +1330,8 @@ private fun VoiceNoteCard(
                                 text = stringResource(note.topicTone.displayLabelRes()),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                maxLines = 1,
+                                softWrap = false,
                                 modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                             )
                         }
@@ -1221,7 +1340,9 @@ private fun VoiceNoteCard(
                         Text(
                             text = formatDuration(note.durationSeconds),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
                     Text(
@@ -1229,6 +1350,7 @@ private fun VoiceNoteCard(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
+                        softWrap = false,
                         overflow = TextOverflow.Ellipsis
                     )
                 }

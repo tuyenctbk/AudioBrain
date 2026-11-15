@@ -12,11 +12,15 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.IntentCompat
 import androidx.credentials.CredentialManager
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -34,6 +38,7 @@ import com.example.audio.RecordingForegroundService
 import com.example.audio.VoiceRecorderManager
 import com.example.core.configureAppCheck
 import com.example.data.ai.AudioBrainAiService
+import com.example.data.billing.UsageQuotaManager
 import com.example.data.offline.NetworkConnectivityObserver
 import com.example.data.offline.PendingMemoStore
 import com.example.data.repository.VoiceNotesRepository
@@ -43,6 +48,7 @@ import com.example.ui.detail.NoteDetailScreen
 import com.example.ui.detail.NoteDetailViewModel
 import com.example.ui.journal.JournalScreen
 import com.example.ui.journal.JournalViewModel
+import com.example.ui.onboarding.OnboardingScreen
 import com.example.ui.review.TranscriptReviewScreen
 import com.example.ui.review.TranscriptReviewViewModel
 import com.example.ui.theme.AudioBrainTheme
@@ -136,27 +142,54 @@ private fun AudioBrainRoot(
     onConsumeExternalCommand: () -> Unit,
     auth: FirebaseAuth = Firebase.auth
 ) {
+    val context = LocalContext.current
+    val quotaManager = remember(context) { UsageQuotaManager.getInstance(context) }
+    val hasCompletedOnboarding by quotaManager.hasCompletedOnboarding.collectAsStateWithLifecycle()
     val currentUser by auth.authStateFlow().collectAsStateWithLifecycle(initialValue = auth.currentUser)
+    var isGuestMode by remember { mutableStateOf(false) }
+
+    val effectiveUid = currentUser?.uid ?: if (isGuestMode) VoiceNotesRepository.GUEST_USER_ID else null
+
+    LaunchedEffect(effectiveUid, currentUser) {
+        quotaManager.setAuthContext(
+            userId = effectiveUid,
+            isGuest = currentUser == null
+        )
+    }
+
+    val rootDestination = when {
+        !hasCompletedOnboarding -> "onboarding"
+        effectiveUid == null -> "auth"
+        else -> "app:$effectiveUid"
+    }
 
     Crossfade(
-        targetState = currentUser?.uid,
-        animationSpec = tween(durationMillis = 260),
-        label = "auth_gate_crossfade"
-    ) { uid ->
+        targetState = rootDestination,
+        animationSpec = tween(durationMillis = 280),
+        label = "root_gate_crossfade"
+    ) { destination ->
         val user = currentUser
-        if (uid == null || user == null) {
-            AuthScreen(
-                onAuthSuccess = { /* AuthStateListener drives transition */ }
-            )
-        } else {
-            key(uid) {
-                AuthenticatedAudioBrainNav(
-                    currentUserId = uid,
-                    userDisplayName = user.displayName,
-                    userEmail = user.email,
-                    externalCommand = externalCommand,
-                    onConsumeExternalCommand = onConsumeExternalCommand
+        when {
+            destination == "onboarding" -> {
+                OnboardingScreen(
+                    onFinishOnboarding = { quotaManager.completeOnboarding() }
                 )
+            }
+            destination == "auth" || effectiveUid == null -> {
+                AuthScreen(
+                    onAuthSuccess = { isGuestMode = true }
+                )
+            }
+            else -> {
+                key(effectiveUid) {
+                    AuthenticatedAudioBrainNav(
+                        currentUserId = effectiveUid,
+                        userDisplayName = user?.displayName ?: stringResource(R.string.auth_guest_display_name),
+                        userEmail = user?.email ?: "guest@audiobrain.ai",
+                        externalCommand = externalCommand,
+                        onConsumeExternalCommand = onConsumeExternalCommand
+                    )
+                }
             }
         }
     }
