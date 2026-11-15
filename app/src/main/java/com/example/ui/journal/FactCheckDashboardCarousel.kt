@@ -67,7 +67,7 @@ import com.example.data.model.VoiceNote
 import com.example.ui.common.displayLabelRes
 import com.example.ui.common.localizedCategoryLabel
 
-enum class FactCheckDashboardFilter(@property:androidx.annotation.StringRes val labelRes: Int) {
+enum class FactCheckDashboardFilter(@param:androidx.annotation.StringRes val labelRes: Int) {
     ALL(R.string.dashboard_filter_all),
     NEEDS_ATTENTION(R.string.dashboard_filter_needs_attention),
     CONFIRMED(R.string.dashboard_filter_confirmed),

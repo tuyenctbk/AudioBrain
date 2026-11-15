@@ -12,12 +12,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.util.Calendar
 import java.util.Locale
 
-enum class SubscriptionTier(@property:StringRes val displayNameRes: Int) {
+enum class SubscriptionTier(@param:StringRes val displayNameRes: Int) {
     FREE(R.string.tier_starter_free),
     PRO(R.string.tier_pro)
 }
 
-enum class QuotaFeature(@property:StringRes val labelRes: Int) {
+enum class QuotaFeature(@param:StringRes val labelRes: Int) {
     AI_MEMO(R.string.quota_feature_ai_memo),
     FACT_CHECK(R.string.quota_feature_fact_check),
     DIGEST(R.string.quota_feature_digest)

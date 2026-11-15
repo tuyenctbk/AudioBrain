@@ -82,7 +82,7 @@ import com.example.ui.common.localizedTimestamp
 import com.google.firebase.Timestamp
 import java.util.Date
 
-enum class HistoryFilterTab(@property:androidx.annotation.StringRes val labelRes: Int) {
+enum class HistoryFilterTab(@param:androidx.annotation.StringRes val labelRes: Int) {
     ALL(R.string.history_tab_all),
     RECURRING(R.string.history_tab_recurring),
     NEEDS_ATTENTION(R.string.history_tab_needs_attention),
