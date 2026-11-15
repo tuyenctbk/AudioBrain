@@ -173,6 +173,11 @@ class VoiceNotesRepository(
     }
 
     fun observeMessages(userId: String, noteId: String): Flow<List<ChatMessage>> = flow {
+        if (userId == GUEST_USER_ID || auth.currentUser == null) {
+            val flow = guestMessagesMap.getOrPut(noteId) { MutableStateFlow(emptyList()) }
+            emitAll(flow)
+            return@flow
+        }
         val path = "users/$userId/notes/$noteId/messages"
         emitAll(
             messagesCollection(userId, noteId)
@@ -590,6 +595,7 @@ class VoiceNotesRepository(
         }
         if (uid == GUEST_USER_ID || auth.currentUser == null) {
             guestNotesFlow.value = guestNotesFlow.value.filterNot { it.id == noteId }
+            guestMessagesMap.remove(noteId)
             return Result.success(Unit)
         }
         val noteRef = notesCollection(uid).document(noteId)
@@ -622,6 +628,21 @@ class VoiceNotesRepository(
         } catch (e: Exception) {
             return Result.failure(e)
         }
+        if (uid == GUEST_USER_ID || auth.currentUser == null) {
+            val msgId = "guest_msg_${System.currentTimeMillis()}_${java.util.UUID.randomUUID().toString().take(6)}"
+            val msg = ChatMessage(
+                id = msgId,
+                userId = GUEST_USER_ID,
+                role = role,
+                text = text.trim().ifBlank { " " }.take(30000),
+                searchQueries = searchQueries.take(15),
+                sources = sources.take(15),
+                createdAt = Timestamp.now()
+            )
+            val flow = guestMessagesMap.getOrPut(noteId) { MutableStateFlow(emptyList()) }
+            flow.value = flow.value + msg
+            return Result.success(msgId)
+        }
         val msgRef = messagesCollection(uid, noteId).document()
         val payload = mapOf(
             "userId" to uid,
@@ -644,7 +665,7 @@ class VoiceNotesRepository(
 
     fun observeUserPreferences(userId: String): Flow<UserPreferences> = flow {
         if (userId == GUEST_USER_ID || auth.currentUser == null) {
-            emit(UserPreferences(userId = userId, noteStructure = NoteStructureMode.DETAILED.value, contextualSummarization = true))
+            emitAll(guestPreferencesFlow)
             return@flow
         }
         val docRef = settingsCollection(userId).document(PREFS_DOC_ID)
@@ -686,6 +707,16 @@ class VoiceNotesRepository(
         } catch (e: Exception) {
             return Result.failure(e)
         }
+        if (uid == GUEST_USER_ID || auth.currentUser == null) {
+            val current = guestPreferencesFlow.value
+            val resolvedContextual = contextualSummarization ?: current.contextualSummarization
+            guestPreferencesFlow.value = current.copy(
+                noteStructure = mode.value,
+                contextualSummarization = resolvedContextual,
+                updatedAt = Timestamp.now()
+            )
+            return Result.success(Unit)
+        }
         val docRef = settingsCollection(uid).document(PREFS_DOC_ID)
         return try {
             val resolvedContextual = contextualSummarization ?: run {
@@ -720,6 +751,16 @@ class VoiceNotesRepository(
             requireUserId()
         } catch (e: Exception) {
             return Result.failure(e)
+        }
+        if (uid == GUEST_USER_ID || auth.currentUser == null) {
+            val current = guestPreferencesFlow.value
+            val resolvedMode = structureMode ?: NoteStructureMode.fromValue(current.noteStructure)
+            guestPreferencesFlow.value = current.copy(
+                noteStructure = resolvedMode.value,
+                contextualSummarization = enabled,
+                updatedAt = Timestamp.now()
+            )
+            return Result.success(Unit)
         }
         val docRef = settingsCollection(uid).document(PREFS_DOC_ID)
         return try {
@@ -890,5 +931,13 @@ class VoiceNotesRepository(
 
         val guestNotesFlow = MutableStateFlow<List<VoiceNote>>(emptyList())
         val guestFactCheckHistoryFlow = MutableStateFlow<List<FactCheckSearchItem>>(emptyList())
+        val guestMessagesMap = java.util.concurrent.ConcurrentHashMap<String, MutableStateFlow<List<ChatMessage>>>()
+        val guestPreferencesFlow = MutableStateFlow(
+            UserPreferences(
+                userId = GUEST_USER_ID,
+                noteStructure = NoteStructureMode.DETAILED.value,
+                contextualSummarization = true
+            )
+        )
     }
 }
