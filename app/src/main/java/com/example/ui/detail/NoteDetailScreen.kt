@@ -169,6 +169,7 @@ fun NoteDetailScreen(
     onSaveDraft: () -> Unit = {},
     onCancelRecording: () -> Unit = {},
     onOpenTranscriptReview: () -> Unit = {},
+    onOpenNote: (String) -> Unit = {},
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -493,7 +494,7 @@ fun NoteDetailScreen(
                                                 onRunFactCheck = { custom -> viewModel.runFactCheck(note, custom) },
                                                 onOpenUri = openSafeUri,
                                                 onDeleteSearchHistoryItem = viewModel::deleteSearchHistoryItem,
-                                                onOpenNote = { onBack() }
+                                                onOpenNote = onOpenNote
                                             )
                                             else -> TranscriptTab(
                                                 note = note,
@@ -633,7 +634,7 @@ fun NoteDetailScreen(
                                             onRunFactCheck = { custom -> viewModel.runFactCheck(note, custom) },
                                             onOpenUri = openSafeUri,
                                             onDeleteSearchHistoryItem = viewModel::deleteSearchHistoryItem,
-                                            onOpenNote = { onBack() }
+                                            onOpenNote = onOpenNote
                                         )
                                         2 -> TranscriptTab(
                                             note = note,
@@ -1263,7 +1264,8 @@ private fun FactCheckTab(
                         onClick = { showHistorySheet = true },
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         modifier = Modifier
-                            .height(34.dp)
+                            .minimumInteractiveComponentSize()
+                            .height(36.dp)
                             .testTag("fact_check_open_history_button")
                     ) {
                         Icon(
@@ -1380,8 +1382,8 @@ private fun FactCheckTab(
                                 )
                                 TextButton(
                                     onClick = { showHistorySheet = true },
-                                    contentPadding = PaddingValues(0.dp),
-                                    modifier = Modifier.height(24.dp)
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                                    modifier = Modifier.minimumInteractiveComponentSize()
                                 ) {
                                     Text(stringResource(R.string.action_all_topics), style = MaterialTheme.typography.labelSmall)
                                 }
@@ -1452,7 +1454,7 @@ private fun FactCheckTab(
                                                 onClick = {
                                                     onRunFactCheck(suggestion.query)
                                                 },
-                                                modifier = Modifier.size(28.dp)
+                                                modifier = Modifier.minimumInteractiveComponentSize()
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.AutoMirrored.Rounded.FactCheck,
@@ -1511,7 +1513,12 @@ private fun FactCheckTab(
                         onRunFactCheck(trimmed)
                         customClaim = ""
                     },
-                    enabled = !isFactChecking,
+                    enabled = !isFactChecking && (
+                        note.transcript.isNotBlank() ||
+                            note.summary.isNotBlank() ||
+                            note.claimsToVerify.isNotEmpty() ||
+                            customClaim.isNotBlank()
+                        ),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.tertiary,
                         contentColor = MaterialTheme.colorScheme.onTertiary

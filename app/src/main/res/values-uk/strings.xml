@@ -555,4 +555,11 @@
     <string name="info_fact_check_limit_skipped">Ліміт перевірок вичерпано — збережено без пошуку.</string>
     <string name="snackbar_eco_lite_enabled">Режим Eco Lite увімкнено — ліміту вистачить надовше!</string>
     <string name="snackbar_grace_already_claimed">Місячні +3 бонусні кредити вже отримано.</string>
+    <string name="auth_error_cancelled">Вхід скасовано. Будь ласка, виберіть обліковий запис Google, щоб продовжити.</string>
+    <string name="edit_title_required_error">Для збереження потрібна назва.</string>
+    <string name="action_open_settings">Відкрити налаштування</string>
+    <string name="status_listening">Слухаю…</string>
+    <string name="tap_to_record">Торкніться мікрофона для запису</string>
+    <string name="err_note_not_found_reverify">Оригінальну нотатку для цієї теми не знайдено.</string>
+    <string name="edit_draft_name_required_error">Назва чернетки не може бути порожньою.</string>
 </resources>

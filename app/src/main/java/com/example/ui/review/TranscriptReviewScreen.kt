@@ -389,15 +389,20 @@ fun TranscriptReviewScreen(
                 }
 
                 is NoteDetailUiState.Ready -> {
-                    val note = state.note
-                    val copyTranscript: () -> Unit = {
-                        clipboardManager.setText(AnnotatedString(draft.transcript))
-                        coroutineScope.launch {
-                            snackbarHostState.showSnackbar(context.getString(R.string.snackbar_transcript_copied))
+                    if (!draft.initializedFromNote) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
                         }
-                    }
+                    } else {
+                        val note = state.note
+                        val copyTranscript: () -> Unit = {
+                            clipboardManager.setText(AnnotatedString(draft.transcript))
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar(context.getString(R.string.snackbar_transcript_copied))
+                            }
+                        }
 
-                    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                         val isExpandedScreen = maxWidth >= 840.dp
                         if (isExpandedScreen) {
                             Row(modifier = Modifier.fillMaxSize()) {
@@ -420,6 +425,7 @@ fun TranscriptReviewScreen(
                                     }
                                     TranscriptEditorWorkspaceCard(
                                         noteId = note.id,
+                                        initializedFromNote = draft.initializedFromNote,
                                         transcript = draft.transcript,
                                         playbackState = playbackState,
                                         readAloudState = readAloudState,
@@ -499,6 +505,7 @@ fun TranscriptReviewScreen(
 
                                 TranscriptEditorWorkspaceCard(
                                     noteId = note.id,
+                                    initializedFromNote = draft.initializedFromNote,
                                     transcript = draft.transcript,
                                     playbackState = playbackState,
                                     readAloudState = readAloudState,
@@ -542,6 +549,7 @@ fun TranscriptReviewScreen(
                                 Spacer(modifier = Modifier.navigationBarsPadding())
                             }
                         }
+                    }
                     }
                 }
             }
@@ -626,6 +634,7 @@ private fun ReviewMetadataStrip(
 @Composable
 private fun TranscriptEditorWorkspaceCard(
     noteId: String,
+    initializedFromNote: Boolean,
     transcript: String,
     playbackState: AudioPlaybackState,
     readAloudState: ReadAloudState,
@@ -640,13 +649,19 @@ private fun TranscriptEditorWorkspaceCard(
     onCopyTranscript: () -> Unit
 ) {
     val segments = remember(transcript) { parseTranscriptSegments(transcript) }
-    var editorMode by remember {
+    var editorMode by remember(noteId, initializedFromNote) {
         mutableStateOf(
             if (segments.any { it.timestampLabel != null }) TranscriptEditorMode.SEGMENTS
             else TranscriptEditorMode.FULL_TEXT
         )
     }
-    var editingSegmentIndex by remember { mutableIntStateOf(-1) }
+    var editingSegmentIndex by remember(noteId, initializedFromNote) { mutableIntStateOf(-1) }
+
+    LaunchedEffect(segments.size) {
+        if (editingSegmentIndex >= segments.size) {
+            editingSegmentIndex = -1
+        }
+    }
 
     Card(
         shape = MaterialTheme.shapes.medium,
@@ -876,7 +891,7 @@ private fun EditableTranscriptSegmentRow(
         animationSpec = tween(180),
         label = "segment_edit_bg_$index"
     )
-    var localText by remember(index, segment.text, isEditing) { mutableStateOf(segment.text) }
+    var localText by remember(index, isEditing) { mutableStateOf(segment.text) }
 
     Surface(
         color = containerColor,
@@ -979,7 +994,9 @@ private fun EditableTranscriptSegmentRow(
                     value = localText,
                     onValueChange = {
                         localText = it
-                        onUpdateSegmentText(it)
+                        if (segment.timestampLabel != null || it.isNotBlank()) {
+                            onUpdateSegmentText(it)
+                        }
                     },
                     minLines = 2,
                     maxLines = 6,
@@ -1036,6 +1053,9 @@ private fun JournalEntryEditorCard(
                 label = { Text(stringResource(R.string.edit_field_title)) },
                 singleLine = true,
                 isError = draft.title.isBlank(),
+                supportingText = if (draft.title.isBlank()) {
+                    { Text(stringResource(R.string.edit_title_required_error)) }
+                } else null,
                 shape = MaterialTheme.shapes.small,
                 modifier = Modifier
                     .fillMaxWidth()

@@ -555,4 +555,11 @@
     <string name="info_fact_check_limit_skipped">Limite de checagem atingido — nota salva sem busca.</string>
     <string name="snackbar_eco_lite_enabled">Modo Eco Lite ativado — sua cota dura mais!</string>
     <string name="snackbar_grace_already_claimed">Os +3 créditos bônus deste mês já foram resgatados.</string>
+    <string name="auth_error_cancelled">O login foi cancelado. Selecione uma conta do Google para continuar.</string>
+    <string name="edit_title_required_error">O título é obrigatório para salvar.</string>
+    <string name="action_open_settings">Abrir configurações</string>
+    <string name="status_listening">Ouvindo…</string>
+    <string name="tap_to_record">Toque no microfone para gravar</string>
+    <string name="err_note_not_found_reverify">A nota original deste tópico não foi encontrada.</string>
+    <string name="edit_draft_name_required_error">O nome do rascunho não pode ficar vazio.</string>
 </resources>

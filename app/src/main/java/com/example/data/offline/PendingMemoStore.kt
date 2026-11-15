@@ -4,6 +4,7 @@ import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -37,11 +38,12 @@ data class PendingMemo(
 
 class PendingMemoStore private constructor(context: Context) {
     private val rootDir = File(context.applicationContext.filesDir, "pending_memos")
+    private val fileLock = Any()
     private val refreshTick = MutableStateFlow(0L)
 
     fun observePending(userId: String): Flow<List<PendingMemo>> = refreshTick.map {
         loadForUser(userId)
-    }
+    }.flowOn(Dispatchers.IO)
 
     suspend fun getPending(userId: String): List<PendingMemo> = withContext(Dispatchers.IO) {
         loadForUser(userId)
@@ -57,23 +59,26 @@ class PendingMemoStore private constructor(context: Context) {
         label: String? = null
     ): PendingMemo = withContext(Dispatchers.IO) {
         val id = UUID.randomUUID().toString()
-        val userDir = userFolder(userId)
-        val audioFile = File(userDir, "$id.audio")
-        audioFile.writeBytes(bytes)
+        val memo = synchronized(fileLock) {
+            val userDir = userFolder(userId)
+            val audioFile = File(userDir, "$id.audio")
+            audioFile.writeBytes(bytes)
 
-        val memo = PendingMemo(
-            id = id,
-            userId = userId,
-            kind = PendingMemoKind.AUDIO,
-            audioFilePath = audioFile.absolutePath,
-            mimeType = mimeType,
-            durationSeconds = durationSeconds,
-            autoFactCheck = autoFactCheck,
-            createdAtMs = System.currentTimeMillis(),
-            deferredForLater = deferredForLater,
-            label = label?.trim()?.takeIf { it.isNotBlank() }
-        )
-        writeMetadata(memo)
+            val created = PendingMemo(
+                id = id,
+                userId = userId,
+                kind = PendingMemoKind.AUDIO,
+                audioFilePath = audioFile.absolutePath,
+                mimeType = mimeType,
+                durationSeconds = durationSeconds,
+                autoFactCheck = autoFactCheck,
+                createdAtMs = System.currentTimeMillis(),
+                deferredForLater = deferredForLater,
+                label = label?.trim()?.takeIf { it.isNotBlank() }
+            )
+            writeMetadata(created)
+            created
+        }
         notifyChanged()
         memo
     }
@@ -84,59 +89,76 @@ class PendingMemoStore private constructor(context: Context) {
         autoFactCheck: Boolean
     ): PendingMemo = withContext(Dispatchers.IO) {
         val id = UUID.randomUUID().toString()
-        userFolder(userId)
-        val memo = PendingMemo(
-            id = id,
-            userId = userId,
-            kind = PendingMemoKind.TEXT,
-            textContent = text,
-            autoFactCheck = autoFactCheck,
-            createdAtMs = System.currentTimeMillis()
-        )
-        writeMetadata(memo)
+        val memo = synchronized(fileLock) {
+            userFolder(userId)
+            val created = PendingMemo(
+                id = id,
+                userId = userId,
+                kind = PendingMemoKind.TEXT,
+                textContent = text,
+                autoFactCheck = autoFactCheck,
+                createdAtMs = System.currentTimeMillis()
+            )
+            writeMetadata(created)
+            created
+        }
         notifyChanged()
         memo
     }
 
     suspend fun updateLabel(userId: String, memoId: String, newLabel: String) = withContext(Dispatchers.IO) {
-        val metaFile = File(userFolder(userId), "$memoId.json")
-        if (!metaFile.exists()) return@withContext
-        val existing = parseMetadata(metaFile) ?: return@withContext
-        val cleaned = newLabel.trim().take(120).takeIf { it.isNotBlank() }
-        writeMetadata(existing.copy(label = cleaned))
-        notifyChanged()
+        val updated = synchronized(fileLock) {
+            val metaFile = File(userFolder(userId), "$memoId.json")
+            if (!metaFile.exists()) return@synchronized false
+            val existing = parseMetadata(metaFile) ?: return@synchronized false
+            val cleaned = newLabel.trim().take(120).takeIf { it.isNotBlank() }
+            writeMetadata(existing.copy(label = cleaned))
+            true
+        }
+        if (updated) notifyChanged()
     }
 
     suspend fun markReadyForTranscription(userId: String, memoId: String) = withContext(Dispatchers.IO) {
-        val metaFile = File(userFolder(userId), "$memoId.json")
-        if (!metaFile.exists()) return@withContext
-        val existing = parseMetadata(metaFile) ?: return@withContext
-        writeMetadata(existing.copy(deferredForLater = false, lastError = null))
-        notifyChanged()
+        val updated = synchronized(fileLock) {
+            val metaFile = File(userFolder(userId), "$memoId.json")
+            if (!metaFile.exists()) return@synchronized false
+            val existing = parseMetadata(metaFile) ?: return@synchronized false
+            writeMetadata(existing.copy(deferredForLater = false, lastError = null))
+            true
+        }
+        if (updated) notifyChanged()
     }
 
     suspend fun markError(userId: String, memoId: String, errorMessage: String?) = withContext(Dispatchers.IO) {
-        val metaFile = File(userFolder(userId), "$memoId.json")
-        if (!metaFile.exists()) return@withContext
-        val existing = parseMetadata(metaFile) ?: return@withContext
-        writeMetadata(existing.copy(lastError = errorMessage))
-        notifyChanged()
+        val updated = synchronized(fileLock) {
+            val metaFile = File(userFolder(userId), "$memoId.json")
+            if (!metaFile.exists()) return@synchronized false
+            val existing = parseMetadata(metaFile) ?: return@synchronized false
+            writeMetadata(existing.copy(lastError = errorMessage))
+            true
+        }
+        if (updated) notifyChanged()
     }
 
     suspend fun remove(userId: String, memoId: String) = withContext(Dispatchers.IO) {
-        val dir = userFolder(userId)
-        File(dir, "$memoId.json").delete()
-        File(dir, "$memoId.audio").delete()
+        synchronized(fileLock) {
+            val dir = userFolder(userId)
+            File(dir, "$memoId.json").delete()
+            File(dir, "$memoId.json.tmp").delete()
+            File(dir, "$memoId.audio").delete()
+        }
         notifyChanged()
     }
 
     suspend fun readAudioBytes(memo: PendingMemo): ByteArray? = withContext(Dispatchers.IO) {
         val path = memo.audioFilePath ?: return@withContext null
-        val file = File(path)
-        if (!file.exists() || file.length() == 0L) null else file.readBytes()
+        synchronized(fileLock) {
+            val file = File(path)
+            if (!file.exists() || file.length() == 0L) null else file.readBytes()
+        }
     }
 
-    fun getAudioFile(memo: PendingMemo): File? {
+    fun getAudioFile(memo: PendingMemo): File? = synchronized(fileLock) {
         val path = memo.audioFilePath ?: return null
         val file = File(path)
         return if (file.exists() && file.length() > 0L) file else null
@@ -149,7 +171,7 @@ class PendingMemoStore private constructor(context: Context) {
         return dir
     }
 
-    private fun loadForUser(userId: String): List<PendingMemo> {
+    private fun loadForUser(userId: String): List<PendingMemo> = synchronized(fileLock) {
         if (userId.isBlank()) return emptyList()
         val dir = userFolder(userId)
         val files = dir.listFiles { _, name -> name.endsWith(".json") } ?: return emptyList()
@@ -171,7 +193,14 @@ class PendingMemoStore private constructor(context: Context) {
             put("deferredForLater", memo.deferredForLater)
             put("label", memo.label ?: "")
         }
-        File(userFolder(memo.userId), "${memo.id}.json").writeText(json.toString())
+        val dir = userFolder(memo.userId)
+        val targetFile = File(dir, "${memo.id}.json")
+        val tempFile = File(dir, "${memo.id}.json.tmp")
+        tempFile.writeText(json.toString())
+        if (!tempFile.renameTo(targetFile)) {
+            targetFile.writeText(json.toString())
+            tempFile.delete()
+        }
     }
 
     private fun parseMetadata(file: File): PendingMemo? {

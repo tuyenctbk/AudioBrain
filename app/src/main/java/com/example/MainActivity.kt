@@ -146,14 +146,23 @@ private fun AudioBrainRoot(
     val quotaManager = remember(context) { UsageQuotaManager.getInstance(context) }
     val hasCompletedOnboarding by quotaManager.hasCompletedOnboarding.collectAsStateWithLifecycle()
     val currentUser by auth.authStateFlow().collectAsStateWithLifecycle(initialValue = auth.currentUser)
+    var manualSignedInUser by remember { mutableStateOf(auth.currentUser) }
     var isGuestMode by remember { mutableStateOf(false) }
 
-    val effectiveUid = currentUser?.uid ?: if (isGuestMode) VoiceNotesRepository.GUEST_USER_ID else null
+    LaunchedEffect(currentUser) {
+        manualSignedInUser = currentUser
+        if (currentUser != null) {
+            isGuestMode = false
+        }
+    }
 
-    LaunchedEffect(effectiveUid, currentUser) {
+    val activeFirebaseUser = currentUser ?: manualSignedInUser
+    val effectiveUid = activeFirebaseUser?.uid ?: if (isGuestMode) VoiceNotesRepository.GUEST_USER_ID else null
+
+    LaunchedEffect(effectiveUid, activeFirebaseUser) {
         quotaManager.setAuthContext(
             userId = effectiveUid,
-            isGuest = currentUser == null
+            isGuest = activeFirebaseUser == null
         )
     }
 
@@ -168,7 +177,7 @@ private fun AudioBrainRoot(
         animationSpec = tween(durationMillis = 280),
         label = "root_gate_crossfade"
     ) { destination ->
-        val user = currentUser
+        val user = activeFirebaseUser
         when {
             destination == "onboarding" -> {
                 OnboardingScreen(
@@ -177,7 +186,18 @@ private fun AudioBrainRoot(
             }
             destination == "auth" || effectiveUid == null -> {
                 AuthScreen(
-                    onAuthSuccess = { isGuestMode = true }
+                    onAuthSuccess = {
+                        val fbUser = auth.currentUser
+                        manualSignedInUser = fbUser
+                        if (fbUser == null) {
+                            isGuestMode = true
+                        } else {
+                            isGuestMode = false
+                        }
+                    },
+                    onContinueAsGuest = {
+                        isGuestMode = true
+                    }
                 )
             }
             else -> {
@@ -187,7 +207,11 @@ private fun AudioBrainRoot(
                         userDisplayName = user?.displayName ?: stringResource(R.string.auth_guest_display_name),
                         userEmail = user?.email ?: "guest@audiobrain.ai",
                         externalCommand = externalCommand,
-                        onConsumeExternalCommand = onConsumeExternalCommand
+                        onConsumeExternalCommand = onConsumeExternalCommand,
+                        onSignedOut = {
+                            isGuestMode = false
+                            manualSignedInUser = null
+                        }
                     )
                 }
             }
@@ -201,7 +225,8 @@ private fun AuthenticatedAudioBrainNav(
     userDisplayName: String?,
     userEmail: String?,
     externalCommand: ExternalLaunchCommand?,
-    onConsumeExternalCommand: () -> Unit
+    onConsumeExternalCommand: () -> Unit,
+    onSignedOut: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
@@ -286,7 +311,8 @@ private fun AuthenticatedAudioBrainNav(
                     journalViewModel.stopActiveRecordingForSignOut()
                     signOutUser(
                         credentialManager = credentialManager,
-                        scope = scope
+                        scope = scope,
+                        onSignOutComplete = onSignedOut
                     )
                 }
             )

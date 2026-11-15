@@ -67,7 +67,7 @@ class VoiceNotesRepository(
         db.collection("users").document(userId).collection("fact_check_history")
 
     fun observeNotes(userId: String): Flow<List<VoiceNote>> = flow {
-        if (userId == GUEST_USER_ID || auth.currentUser == null) {
+        if (userId == GUEST_USER_ID) {
             emitAll(guestNotesFlow)
             return@flow
         }
@@ -95,7 +95,7 @@ class VoiceNotesRepository(
                     if (exceptionToLog != null && auth.currentUser?.uid == userId) {
                         handleFirestoreError(exceptionToLog, OperationType.LIST, path)
                     }
-                    emitAll(guestNotesFlow)
+                    throw error
                 }
         )
     }
@@ -106,7 +106,7 @@ class VoiceNotesRepository(
             emit(emptyList())
             return@flow
         }
-        if (userId == GUEST_USER_ID || auth.currentUser == null) {
+        if (userId == GUEST_USER_ID) {
             emitAll(guestNotesFlow.map { notes -> notes.filter { it.tags.contains(normalizedTag) } })
             return@flow
         }
@@ -135,13 +135,13 @@ class VoiceNotesRepository(
                     if (exceptionToLog != null && auth.currentUser?.uid == userId) {
                         handleFirestoreError(exceptionToLog, OperationType.LIST, path)
                     }
-                    emitAll(guestNotesFlow.map { notes -> notes.filter { it.tags.contains(normalizedTag) } })
+                    throw error
                 }
         )
     }
 
     fun observeNote(userId: String, noteId: String): Flow<VoiceNote?> = flow {
-        if (userId == GUEST_USER_ID || auth.currentUser == null) {
+        if (userId == GUEST_USER_ID) {
             emitAll(guestNotesFlow.map { notes -> notes.firstOrNull { it.id == noteId } })
             return@flow
         }
@@ -167,7 +167,7 @@ class VoiceNotesRepository(
                     if (exceptionToLog != null && auth.currentUser?.uid == userId) {
                         handleFirestoreError(exceptionToLog, OperationType.GET, docRef.path)
                     }
-                    emitAll(guestNotesFlow.map { notes -> notes.firstOrNull { it.id == noteId } })
+                    throw error
                 }
         )
     }
@@ -258,12 +258,13 @@ class VoiceNotesRepository(
         } catch (e: Exception) {
             return Result.failure(e)
         }
+        val fallbackTitle = appContext?.getString(R.string.fallback_untitled_voice_note) ?: "Untitled Voice Note"
         if (uid == GUEST_USER_ID || auth.currentUser == null) {
             val localId = "local_note_${System.currentTimeMillis()}"
             val newNote = VoiceNote(
                 id = localId,
                 userId = GUEST_USER_ID,
-                title = title.trim().ifBlank { "Untitled Voice Note" }.take(200),
+                title = title.trim().ifBlank { fallbackTitle }.take(200),
                 summary = summary.trim().take(4000),
                 transcript = transcript.trim().take(50000),
                 category = category.label,
@@ -290,7 +291,7 @@ class VoiceNotesRepository(
         val docRef = notesCollection(uid).document()
         val payload = mapOf(
             "userId" to uid,
-            "title" to title.trim().ifBlank { "Untitled Voice Note" }.take(200),
+            "title" to title.trim().ifBlank { fallbackTitle }.take(200),
             "summary" to summary.trim().take(4000),
             "transcript" to transcript.trim().take(50000),
             "category" to category.label,
@@ -378,11 +379,12 @@ class VoiceNotesRepository(
         } catch (e: Exception) {
             return Result.failure(e)
         }
+        val fallbackTitle = appContext?.getString(R.string.fallback_untitled_voice_note) ?: "Untitled Voice Note"
         if (uid == GUEST_USER_ID || auth.currentUser == null) {
             guestNotesFlow.value = guestNotesFlow.value.map {
                 if (it.id == noteId) {
                     it.copy(
-                        title = title.trim().ifBlank { "Untitled Voice Note" }.take(200),
+                        title = title.trim().ifBlank { fallbackTitle }.take(200),
                         summary = summary.trim().take(4000),
                         transcript = transcript.trim().take(50000),
                         category = category.label,
@@ -399,7 +401,7 @@ class VoiceNotesRepository(
         }
         val docRef = notesCollection(uid).document(noteId)
         val payload = buildMap<String, Any> {
-            put("title", title.trim().ifBlank { "Untitled Voice Note" }.take(200))
+            put("title", title.trim().ifBlank { fallbackTitle }.take(200))
             put("summary", summary.trim().take(4000))
             put("transcript", transcript.trim().take(50000))
             put("category", category.label)
@@ -601,12 +603,14 @@ class VoiceNotesRepository(
         val noteRef = notesCollection(uid).document(noteId)
         return try {
             val messagesSnap = messagesCollection(uid, noteId).get().await()
-            val batch = db.batch()
-            for (msgDoc in messagesSnap.documents) {
-                batch.delete(msgDoc.reference)
+            val allRefs = messagesSnap.documents.map { it.reference } + noteRef
+            for (chunk in allRefs.chunked(450)) {
+                val batch = db.batch()
+                for (ref in chunk) {
+                    batch.delete(ref)
+                }
+                batch.commit().await()
             }
-            batch.delete(noteRef)
-            batch.commit().await()
             Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
@@ -867,33 +871,36 @@ class VoiceNotesRepository(
         val docRef = factCheckHistoryCollection(uid).document(historyId)
 
         return try {
-            val snapshot = docRef.get().await()
-            val existingCount = if (snapshot.exists()) {
-                snapshot.getLong("verificationCount") ?: 1L
-            } else {
-                0L
-            }
-            val newCount = (existingCount + 1L).coerceIn(1L, 10000L)
             val resolvedTopic = topic?.trim()?.take(200)
                 ?: FactCheckHistoryHelper.cleanTopicLabel(cleanQuery)
 
-            val payload = buildMap<String, Any> {
-                put("userId", uid)
-                put("query", cleanQuery)
-                put("topic", resolvedTopic)
-                put("verificationCount", newCount)
-                put("lastStatus", status.value)
-                if (explanation.isNotBlank()) put("lastExplanation", explanation.trim().take(2000))
-                if (sourceUrl.isNotBlank()) put("sourceUrl", sourceUrl.trim().take(2000))
-                if (!noteId.isNullOrBlank()) put("lastNoteId", noteId.trim().take(100))
-                if (!noteTitle.isNullOrBlank()) put("lastNoteTitle", noteTitle.trim().take(300))
-                if (!snapshot.exists()) {
-                    put("createdAt", FieldValue.serverTimestamp())
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(docRef)
+                val existingCount = if (snapshot.exists()) {
+                    snapshot.getLong("verificationCount") ?: 1L
+                } else {
+                    0L
                 }
-                put("updatedAt", FieldValue.serverTimestamp())
-            }
+                val newCount = (existingCount + 1L).coerceIn(1L, 10000L)
 
-            docRef.set(payload, SetOptions.merge()).await()
+                val payload = buildMap<String, Any> {
+                    put("userId", uid)
+                    put("query", cleanQuery)
+                    put("topic", resolvedTopic)
+                    put("verificationCount", newCount)
+                    put("lastStatus", status.value)
+                    if (explanation.isNotBlank()) put("lastExplanation", explanation.trim().take(2000))
+                    if (sourceUrl.isNotBlank()) put("sourceUrl", sourceUrl.trim().take(2000))
+                    if (!noteId.isNullOrBlank()) put("lastNoteId", noteId.trim().take(100))
+                    if (!noteTitle.isNullOrBlank()) put("lastNoteTitle", noteTitle.trim().take(300))
+                    if (!snapshot.exists()) {
+                        put("createdAt", FieldValue.serverTimestamp())
+                    }
+                    put("updatedAt", FieldValue.serverTimestamp())
+                }
+
+                transaction.set(docRef, payload, SetOptions.merge())
+            }.await()
             Result.success(Unit)
         } catch (e: CancellationException) {
             throw e

@@ -156,6 +156,7 @@ fun VoiceDraftsAndQueueSection(
                                 onClick = onTranscribeAllDrafts,
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                                 modifier = Modifier
+                                    .minimumInteractiveComponentSize()
                                     .height(36.dp)
                                     .testTag("transcribe_all_drafts_button")
                             ) {
@@ -343,6 +344,7 @@ private fun VoiceDraftItemCard(
                             color = MaterialTheme.colorScheme.secondaryContainer,
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier
+                                .minimumInteractiveComponentSize()
                                 .clip(RoundedCornerShape(8.dp))
                                 .clickable(onClick = onCycleSpeed)
                         ) {
@@ -389,6 +391,7 @@ private fun VoiceDraftItemCard(
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     modifier = Modifier
+                        .minimumInteractiveComponentSize()
                         .height(40.dp)
                         .testTag("transcribe_draft_${memo.id}")
                 ) {
@@ -507,6 +510,10 @@ fun RenameDraftDialog(
                 value = draftName,
                 onValueChange = { draftName = it },
                 singleLine = true,
+                isError = draftName.isBlank(),
+                supportingText = if (draftName.isBlank()) {
+                    { Text(stringResource(R.string.edit_draft_name_required_error)) }
+                } else null,
                 placeholder = { Text(stringResource(R.string.rename_draft_hint)) },
                 modifier = Modifier
                     .fillMaxWidth()

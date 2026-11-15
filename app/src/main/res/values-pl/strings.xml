@@ -555,4 +555,11 @@
     <string name="info_fact_check_limit_skipped">Osiągnięto limit weryfikacji — zapisano bez wyszukiwania.</string>
     <string name="snackbar_eco_lite_enabled">Tryb Eco Lite włączony — limit wystarczy na dłużej!</string>
     <string name="snackbar_grace_already_claimed">Miesięczne +3 bonusowe kredyty zostały już odebrane.</string>
+    <string name="auth_error_cancelled">Logowanie zostało anulowane. Wybierz konto Google, aby kontynuować.</string>
+    <string name="edit_title_required_error">Tytuł jest wymagany do zapisania.</string>
+    <string name="action_open_settings">Otwórz ustawienia</string>
+    <string name="status_listening">Słucham…</string>
+    <string name="tap_to_record">Dotknij mikrofonu, aby nagrać</string>
+    <string name="err_note_not_found_reverify">Nie znaleziono oryginalnej notatki dla tego tematu.</string>
+    <string name="edit_draft_name_required_error">Nazwa szkicu nie może być pusta.</string>
 </resources>

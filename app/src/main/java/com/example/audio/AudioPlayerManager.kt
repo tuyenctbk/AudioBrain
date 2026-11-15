@@ -59,6 +59,7 @@ class AudioPlayerManager(
             val player = MediaPlayer().apply {
                 setDataSource(file.absolutePath)
                 setOnPreparedListener { mp ->
+                    if (mediaPlayer !== mp) return@setOnPreparedListener
                     val dur = mp.duration.toLong().coerceAtLeast(0L)
                     _state.value = _state.value.copy(
                         hasAudio = true,
@@ -69,12 +70,14 @@ class AudioPlayerManager(
                     )
                     if (autoPlay) {
                         applySpeedIfSupported(mp, _state.value.playbackSpeed)
-                        runCatching { mp.start() }
-                        _state.value = _state.value.copy(isPlaying = true)
-                        startProgressTicker()
+                        if (runCatching { mp.start() }.isSuccess) {
+                            _state.value = _state.value.copy(isPlaying = true)
+                            startProgressTicker()
+                        }
                     }
                 }
                 setOnCompletionListener { mp ->
+                    if (mediaPlayer !== mp) return@setOnCompletionListener
                     progressJob?.cancel()
                     runCatching { mp.seekTo(0) }
                     _state.value = _state.value.copy(

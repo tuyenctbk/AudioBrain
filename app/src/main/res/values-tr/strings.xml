@@ -555,4 +555,11 @@
     <string name="info_fact_check_limit_skipped">Doğrulama sınırına ulaşıldı — arama olmadan kaydedildi.</string>
     <string name="snackbar_eco_lite_enabled">Eco Lite Modu etkinleştirildi — kotanız daha uzun süre yeter!</string>
     <string name="snackbar_grace_already_claimed">Bu ayın +3 bonus kredisi zaten alındı.</string>
+    <string name="auth_error_cancelled">Oturum açma iptal edildi. Devam etmek için lütfen bir Google hesabı seçin.</string>
+    <string name="edit_title_required_error">Kaydetmek için başlık gereklidir.</string>
+    <string name="action_open_settings">Ayarları Aç</string>
+    <string name="status_listening">Dinliyor…</string>
+    <string name="tap_to_record">Kaydetmek için mikrofona dokunun</string>
+    <string name="err_note_not_found_reverify">Bu konuya ait orijinal not bulunamadı.</string>
+    <string name="edit_draft_name_required_error">Taslak adı boş olamaz.</string>
 </resources>

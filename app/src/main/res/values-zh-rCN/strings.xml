@@ -555,4 +555,11 @@
     <string name="info_fact_check_limit_skipped">核查次数已达上限 — 笔记已保存（未启用搜索核查）。</string>
     <string name="snackbar_eco_lite_enabled">Eco Lite 模式已开启 — 额度更耐用！</string>
     <string name="snackbar_grace_already_claimed">本月 +3 奖励额度已领取。</string>
+    <string name="auth_error_cancelled">登录已取消。请选择一个 Google 账号以继续。</string>
+    <string name="edit_title_required_error">保存时标题不能为空。</string>
+    <string name="action_open_settings">打开设置</string>
+    <string name="status_listening">正在倾听…</string>
+    <string name="tap_to_record">轻触麦克风开始录音</string>
+    <string name="err_note_not_found_reverify">未找到该主题对应的原始笔记。</string>
+    <string name="edit_draft_name_required_error">草稿名称不能为空。</string>
 </resources>

@@ -29,6 +29,10 @@ class ReadAloudManager(context: Context) {
         runCatching {
             var engine: TextToSpeech? = null
             engine = TextToSpeech(appContext) { status ->
+                if (tts !== engine) {
+                    runCatching { engine?.shutdown() }
+                    return@TextToSpeech
+                }
                 if (status == TextToSpeech.SUCCESS) {
                     runCatching {
                         engine?.language = Locale.getDefault()

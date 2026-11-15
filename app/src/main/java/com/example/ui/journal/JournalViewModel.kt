@@ -391,7 +391,7 @@ class JournalViewModel(
         }
     }
 
-    fun reverifyNoteFromDashboard(note: VoiceNote) {
+    fun reverifyNoteFromDashboard(note: VoiceNote, focusClaim: String? = null) {
         if (_reverifyingNoteIds.value.contains(note.id)) return
         if (!quotaManager.canUseFeature(QuotaFeature.FACT_CHECK)) {
             openPaywall(QuotaFeature.FACT_CHECK)
@@ -400,10 +400,16 @@ class JournalViewModel(
         quotaManager.recordUsage(QuotaFeature.FACT_CHECK)
         viewModelScope.launch {
             _reverifyingNoteIds.value = _reverifyingNoteIds.value + note.id
-            val claims = if (note.claimsToVerify.isNotEmpty()) {
+            val baseClaims = if (note.claimsToVerify.isNotEmpty()) {
                 note.claimsToVerify
             } else {
                 note.claimVerdicts.map { it.claim }.filter { it.isNotBlank() }
+            }
+            val cleanedFocus = focusClaim?.trim()?.takeIf { it.isNotBlank() }
+            val claims = if (cleanedFocus != null && baseClaims.none { it.equals(cleanedFocus, ignoreCase = true) }) {
+                listOf(cleanedFocus) + baseClaims
+            } else {
+                baseClaims
             }
 
             aiService.factCheckClaims(
@@ -558,7 +564,7 @@ class JournalViewModel(
             }
 
             quotaManager.recordUsage(QuotaFeature.AI_MEMO)
-            pendingStore.enqueueAudio(
+            val enqueued = pendingStore.enqueueAudio(
                 userId = currentUserId,
                 bytes = recorded.bytes,
                 mimeType = recorded.mimeType,
@@ -566,7 +572,7 @@ class JournalViewModel(
                 autoFactCheck = _captureState.value.autoFactCheck,
                 deferredForLater = false
             )
-            syncPendingMemos(autoTriggered = false)
+            syncPendingMemos(autoTriggered = false, targetMemoId = enqueued.id)
         }
     }
 
@@ -607,7 +613,7 @@ class JournalViewModel(
             }
 
             quotaManager.recordUsage(QuotaFeature.AI_MEMO)
-            pendingStore.enqueueAudio(
+            val enqueued = pendingStore.enqueueAudio(
                 userId = currentUserId,
                 bytes = imported.bytes,
                 mimeType = imported.mimeType,
@@ -615,7 +621,7 @@ class JournalViewModel(
                 autoFactCheck = _captureState.value.autoFactCheck,
                 deferredForLater = false
             )
-            syncPendingMemos(autoTriggered = false)
+            syncPendingMemos(autoTriggered = false, targetMemoId = enqueued.id)
         }
     }
 
@@ -653,12 +659,12 @@ class JournalViewModel(
                 errorMessage = null,
                 infoMessage = null
             )
-            pendingStore.enqueueText(
+            val enqueued = pendingStore.enqueueText(
                 userId = currentUserId,
                 text = trimmed,
                 autoFactCheck = _captureState.value.autoFactCheck
             )
-            syncPendingMemos(autoTriggered = false)
+            syncPendingMemos(autoTriggered = false, targetMemoId = enqueued.id)
         }
     }
 
@@ -749,6 +755,7 @@ class JournalViewModel(
             val queue = when {
                 targetMemoId != null -> allPending.filter { it.id == targetMemoId }
                 includeDeferred -> allPending
+                autoTriggered -> allPending.filter { !it.deferredForLater && it.lastError == null }
                 else -> allPending.filter { !it.deferredForLater }
             }
             if (queue.isEmpty()) {
@@ -757,6 +764,8 @@ class JournalViewModel(
                 }
                 return@withLock
             }
+
+            var lastErrorReason: String? = null
 
             for (memo in queue) {
                 if (!networkObserver.isCurrentlyOnline()) {
@@ -809,11 +818,8 @@ class JournalViewModel(
                     quotaManager.refundInteraction(QuotaFeature.AI_MEMO)
                     val reason = err.localizedMessage ?: context.getString(R.string.err_process_memo)
                     pendingStore.markError(currentUserId, memo.id, reason)
-                    _captureState.value = _captureState.value.copy(
-                        phase = CapturePhase.Idle,
-                        errorMessage = context.getString(R.string.err_queued_for_retry, reason)
-                    )
-                    return@withLock
+                    lastErrorReason = reason
+                    continue
                 }
 
                 val savedNoteId = saveAnalyzedMemo(
@@ -823,11 +829,8 @@ class JournalViewModel(
                 ).getOrElse { err ->
                     val reason = err.localizedMessage ?: context.getString(R.string.err_sync_firestore)
                     pendingStore.markError(currentUserId, memo.id, reason)
-                    _captureState.value = _captureState.value.copy(
-                        phase = CapturePhase.Idle,
-                        errorMessage = context.getString(R.string.err_queued_for_retry, reason)
-                    )
-                    return@withLock
+                    lastErrorReason = reason
+                    continue
                 }
 
                 if (audioBytesForLocalPlayback != null) {
@@ -835,13 +838,18 @@ class JournalViewModel(
                 }
                 pendingStore.remove(currentUserId, memo.id)
 
-                if (!autoTriggered && queue.size == 1) {
+                if (!autoTriggered && (targetMemoId != null || queue.size == 1)) {
                     _createdNoteEvents.tryEmit(savedNoteId)
                 }
             }
 
             if (_captureState.value.phase != CapturePhase.Recording) {
-                _captureState.value = _captureState.value.copy(phase = CapturePhase.Idle)
+                _captureState.value = _captureState.value.copy(
+                    phase = CapturePhase.Idle,
+                    errorMessage = lastErrorReason?.let { reason ->
+                        context.getString(R.string.err_queued_for_retry, reason)
+                    } ?: _captureState.value.errorMessage
+                )
             }
         }
     }

@@ -555,4 +555,11 @@
     <string name="info_fact_check_limit_skipped">Đã hết lượt kiểm chứng — đã lưu ghi chú không kèm tìm kiếm.</string>
     <string name="snackbar_eco_lite_enabled">Đã bật chế độ Eco Lite — hạn mức dùng được lâu hơn!</string>
     <string name="snackbar_grace_already_claimed">Đã nhận +3 lượt thưởng miễn phí trong tháng này rồi.</string>
+    <string name="auth_error_cancelled">Đã hủy đăng nhập. Vui lòng chọn một tài khoản Google để tiếp tục.</string>
+    <string name="edit_title_required_error">Cần có tiêu đề để lưu.</string>
+    <string name="action_open_settings">Mở Cài đặt</string>
+    <string name="status_listening">Đang nghe…</string>
+    <string name="tap_to_record">Chạm vào mic để ghi âm</string>
+    <string name="err_note_not_found_reverify">Không tìm thấy ghi chú gốc cho chủ đề này.</string>
+    <string name="edit_draft_name_required_error">Tên bản nháp không được để trống.</string>
 </resources>

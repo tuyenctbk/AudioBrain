@@ -555,4 +555,11 @@
     <string name="info_fact_check_limit_skipped">Лимит проверок исчерпан — заметка сохранена без поиска.</string>
     <string name="snackbar_eco_lite_enabled">Режим Eco Lite включён — лимита хватит надолго!</string>
     <string name="snackbar_grace_already_claimed">Месячные +3 бонусных кредита уже получены.</string>
+    <string name="auth_error_cancelled">Вход отменён. Выберите аккаунт Google, чтобы продолжить.</string>
+    <string name="edit_title_required_error">Для сохранения необходимо указать название.</string>
+    <string name="action_open_settings">Открыть настройки</string>
+    <string name="status_listening">Слушаю…</string>
+    <string name="tap_to_record">Нажмите на микрофон для записи</string>
+    <string name="err_note_not_found_reverify">Исходная заметка по этой теме не найдена.</string>
+    <string name="edit_draft_name_required_error">Название черновика не может быть пустым.</string>
 </resources>

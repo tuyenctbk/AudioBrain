@@ -555,4 +555,11 @@
     <string name="info_fact_check_limit_skipped">Faktakollsgräns nådd — sparad utan sökverifiering.</string>
     <string name="snackbar_eco_lite_enabled">Eco Lite-läge aktiverat — din kvot räcker längre!</string>
     <string name="snackbar_grace_already_claimed">Månadens +3 bonuskrediter har redan hämtats.</string>
+    <string name="auth_error_cancelled">Inloggningen avbröts. Välj ett Google-konto för att fortsätta.</string>
+    <string name="edit_title_required_error">En titel krävs för att spara.</string>
+    <string name="action_open_settings">Öppna inställningar</string>
+    <string name="status_listening">Lyssnar…</string>
+    <string name="tap_to_record">Tryck på mikrofonen för att spela in</string>
+    <string name="err_note_not_found_reverify">Ursprungsanteckningen för detta ämne hittades inte.</string>
+    <string name="edit_draft_name_required_error">Utkastets namn får inte vara tomt.</string>
 </resources>

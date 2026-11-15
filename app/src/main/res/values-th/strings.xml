@@ -555,4 +555,11 @@
     <string name="info_fact_check_limit_skipped">ครบโควตาตรวจข้อเท็จจริงแล้ว — บันทึกโน้ตโดยไม่ใช้ Search</string>
     <string name="snackbar_eco_lite_enabled">เปิดใช้โหมด Eco Lite แล้ว — โควตาใช้งานได้นานขึ้น!</string>
     <string name="snackbar_grace_already_claimed">รับโบนัสเครดิต +3 ของเดือนนี้ไปแล้ว</string>
+    <string name="auth_error_cancelled">ยกเลิกการลงชื่อเข้าใช้แล้ว โปรดเลือกบัญชี Google เพื่อดำเนินการต่อ</string>
+    <string name="edit_title_required_error">ต้องระบุชื่อเรื่องเพื่อบันทึก</string>
+    <string name="action_open_settings">เปิดการตั้งค่า</string>
+    <string name="status_listening">กำลังฟัง…</string>
+    <string name="tap_to_record">แตะไมโครโฟนเพื่อบันทึกเสียง</string>
+    <string name="err_note_not_found_reverify">ไม่พบโน้ตต้นฉบับสำหรับหัวข้อนี้</string>
+    <string name="edit_draft_name_required_error">ชื่อร่างบันทึกต้องไม่ว่างเปล่า</string>
 </resources>

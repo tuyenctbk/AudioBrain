@@ -1,14 +1,20 @@
 package com.example
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.provider.CalendarContract
 import androidx.test.core.app.ApplicationProvider
 import com.example.data.ai.AudioBrainAiService
 import com.example.data.export.TaskActionUtils
 import com.example.data.model.ClaimVerdictStatus
+import com.example.data.model.NoteCategory
+import com.example.data.model.VoiceNote
 import com.example.data.offline.PendingMemoKind
 import com.example.data.offline.PendingMemoStore
+import com.example.ui.auth.findActivity
+import com.example.ui.review.TranscriptReviewDraft
 import com.example.widget.WidgetSnapshot
 import com.example.widget.WidgetSnapshotStore
 import kotlinx.coroutines.runBlocking
@@ -16,9 +22,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -157,5 +165,53 @@ class AudioBrainAndroidFeaturesTest {
         store.remove(userId, savedDraft.id)
         assertTrue(store.getPending(userId).isEmpty())
         assertNull(store.getAudioFile(savedDraft))
+    }
+
+    @Test
+    fun findActivity_unwrapsNestedContextWrappersAndReturnsNullForAppContext() {
+        val activity = Robolectric.buildActivity(Activity::class.java).get()
+        val singleWrapped = ContextWrapper(activity)
+        val doubleWrapped = ContextWrapper(singleWrapped)
+
+        assertSame(activity, activity.findActivity())
+        assertSame(activity, doubleWrapped.findActivity())
+        assertNull(ApplicationProvider.getApplicationContext<Context>().findActivity())
+    }
+
+    @Test
+    fun transcriptReviewDraft_tracksInitializationAndDirtyStateAccurately() {
+        val note = VoiceNote(
+            id = "n1",
+            userId = "u1",
+            title = "Morning Sync",
+            summary = "Aligned on roadmap.",
+            transcript = "[00:00] Ship v2 next week.",
+            category = NoteCategory.MEETING.label,
+            tags = listOf("roadmap"),
+            actionItems = listOf("Publish release notes")
+        )
+
+        val uninitialized = TranscriptReviewDraft()
+        assertFalse(uninitialized.initializedFromNote)
+        assertFalse(uninitialized.matches(note))
+
+        val draft = TranscriptReviewDraft.fromNote(note)
+        assertTrue(draft.initializedFromNote)
+        assertTrue(draft.matches(note))
+
+        val edited = draft.copy(transcript = "[00:00] Ship v2 on Friday.")
+        assertFalse(edited.matches(note))
+    }
+
+    @Test
+    fun localizedStrings_centralFabAndValidationKeysAreNonBlank() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertTrue(context.getString(R.string.status_listening).isNotBlank())
+        assertTrue(context.getString(R.string.tap_to_record).isNotBlank())
+        assertTrue(context.getString(R.string.auth_error_cancelled).isNotBlank())
+        assertTrue(context.getString(R.string.edit_title_required_error).isNotBlank())
+        assertTrue(context.getString(R.string.edit_draft_name_required_error).isNotBlank())
+        assertTrue(context.getString(R.string.action_open_settings).isNotBlank())
+        assertTrue(context.getString(R.string.err_note_not_found_reverify).isNotBlank())
     }
 }

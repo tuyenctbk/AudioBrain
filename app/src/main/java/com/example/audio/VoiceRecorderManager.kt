@@ -45,6 +45,7 @@ class VoiceRecorderManager(context: Context) {
     private val appContext = context.applicationContext
     private val audioManager = appContext.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
+    private val recorderLock = Any()
     private var recorder: MediaRecorder? = null
     private var outputFile: File? = null
     private var activeSegmentStartMs: Long = 0L
@@ -66,7 +67,7 @@ class VoiceRecorderManager(context: Context) {
         scope: CoroutineScope,
         userId: String? = null,
         autoFactCheck: Boolean = true
-    ): Boolean {
+    ): Boolean = synchronized(recorderLock) {
         if (_state.value.isRecording) return false
         val hasPermission = ContextCompat.checkSelfPermission(
             appContext,
@@ -115,6 +116,8 @@ class VoiceRecorderManager(context: Context) {
             Log.e(TAG, "Failed to start MediaRecorder", e)
             cleanupRecorder()
             file.delete()
+            sessionUserId = null
+            sessionAutoFactCheck = true
             _state.value = RecordingState(
                 isRecording = false,
                 isPaused = false,
@@ -124,7 +127,7 @@ class VoiceRecorderManager(context: Context) {
         }
     }
 
-    fun pauseRecording(): Boolean {
+    fun pauseRecording(): Boolean = synchronized(recorderLock) {
         val current = _state.value
         val activeRecorder = recorder ?: return false
         if (!current.isRecording || current.isPaused) return false
@@ -143,7 +146,7 @@ class VoiceRecorderManager(context: Context) {
         }
     }
 
-    fun resumeRecording(scope: CoroutineScope): Boolean {
+    fun resumeRecording(scope: CoroutineScope): Boolean = synchronized(recorderLock) {
         val current = _state.value
         val activeRecorder = recorder ?: return false
         if (!current.isRecording || !current.isPaused) return false
@@ -166,7 +169,7 @@ class VoiceRecorderManager(context: Context) {
         meterJob?.cancel()
         meterJob = scope.launch(Dispatchers.Default) {
             while (isActive && _state.value.isRecording) {
-                val activeRecorder = recorder ?: break
+                val activeRecorder = synchronized(recorderLock) { recorder } ?: break
                 val current = _state.value
                 if (current.isPaused) {
                     delay(120L)
@@ -192,22 +195,28 @@ class VoiceRecorderManager(context: Context) {
     }
 
     suspend fun stopRecording(): Result<RecordedAudioResult> = withContext(Dispatchers.IO) {
-        val currentRecorder = recorder
-        val file = outputFile
-        val wasPaused = _state.value.isPaused
-        val finalDurationMs = if (wasPaused) {
-            accumulatedDurationMs
-        } else {
-            accumulatedDurationMs + (System.currentTimeMillis() - activeSegmentStartMs).coerceAtLeast(0L)
+        val currentRecorder: MediaRecorder?
+        val file: File?
+        val duration: Long
+        synchronized(recorderLock) {
+            currentRecorder = recorder
+            file = outputFile
+            recorder = null
+            outputFile = null
+            val wasPaused = _state.value.isPaused
+            val finalDurationMs = if (wasPaused) {
+                accumulatedDurationMs
+            } else {
+                accumulatedDurationMs + (System.currentTimeMillis() - activeSegmentStartMs).coerceAtLeast(0L)
+            }
+            duration = (finalDurationMs / 1000L).coerceAtLeast(1L)
+            meterJob?.cancel()
+            meterJob = null
+            _state.value = RecordingState(isRecording = false, isPaused = false)
         }
-        val duration = (finalDurationMs / 1000L).coerceAtLeast(1L)
-
-        meterJob?.cancel()
-        meterJob = null
-        _state.value = RecordingState(isRecording = false, isPaused = false)
 
         if (currentRecorder == null || file == null) {
-            cleanupRecorder()
+            synchronized(recorderLock) { cleanupRecorder() }
             return@withContext Result.failure(IllegalStateException(appContext.getString(R.string.err_no_active_recording)))
         }
 
@@ -215,14 +224,17 @@ class VoiceRecorderManager(context: Context) {
             currentRecorder.stop()
         } catch (e: Exception) {
             Log.e(TAG, "MediaRecorder stop failed", e)
-            cleanupRecorder()
+            runCatching { currentRecorder.reset() }
+            runCatching { currentRecorder.release() }
+            synchronized(recorderLock) { cleanupRecorder() }
             file.delete()
             return@withContext Result.failure(
                 IllegalStateException(appContext.getString(R.string.err_recording_too_short))
             )
         } finally {
-            cleanupRecorder()
-            outputFile = null
+            runCatching { currentRecorder.reset() }
+            runCatching { currentRecorder.release() }
+            synchronized(recorderLock) { cleanupRecorder() }
         }
 
         return@withContext try {
@@ -248,17 +260,23 @@ class VoiceRecorderManager(context: Context) {
         }
     }
 
-    fun cancelRecording() {
+    fun cancelRecording() = synchronized(recorderLock) {
         meterJob?.cancel()
         meterJob = null
+        val activeRecorder = recorder
+        recorder = null
         try {
-            recorder?.stop()
+            activeRecorder?.stop()
         } catch (_: Exception) {
         }
+        runCatching { activeRecorder?.reset() }
+        runCatching { activeRecorder?.release() }
         cleanupRecorder()
         outputFile?.delete()
         outputFile = null
         accumulatedDurationMs = 0L
+        sessionUserId = null
+        sessionAutoFactCheck = true
         _state.value = RecordingState()
     }
 

@@ -36,6 +36,7 @@ class RecordingForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        isServiceActive = true
         ensureChannel()
     }
 
@@ -43,7 +44,11 @@ class RecordingForegroundService : Service() {
         when (intent?.action) {
             ACTION_START -> {
                 promoteToForeground(buildNotification(recorderManager.state.value))
-                observeRecordingUpdates()
+                if (pendingStopRequested || !recorderManager.state.value.isRecording) {
+                    stopSelfSafely()
+                } else {
+                    observeRecordingUpdates()
+                }
             }
             ACTION_TOGGLE_PAUSE -> {
                 val current = recorderManager.state.value
@@ -232,6 +237,8 @@ class RecordingForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        isServiceActive = false
+        pendingStopRequested = false
         serviceScope.cancel()
         super.onDestroy()
     }
@@ -239,6 +246,12 @@ class RecordingForegroundService : Service() {
     companion object {
         private const val CHANNEL_ID = "audiobrain_recording"
         private const val NOTIFICATION_ID = 4201
+
+        @Volatile
+        private var isServiceActive = false
+
+        @Volatile
+        private var pendingStopRequested = false
 
         const val ACTION_START = "com.example.audio.ACTION_START_RECORDING"
         const val ACTION_TOGGLE_PAUSE = "com.example.audio.ACTION_TOGGLE_PAUSE"
@@ -248,6 +261,7 @@ class RecordingForegroundService : Service() {
         const val ACTION_STOP_SERVICE_ONLY = "com.example.audio.ACTION_STOP_SERVICE_ONLY"
 
         fun start(context: Context) {
+            pendingStopRequested = false
             val intent = Intent(context.applicationContext, RecordingForegroundService::class.java).apply {
                 action = ACTION_START
             }
@@ -257,11 +271,13 @@ class RecordingForegroundService : Service() {
         }
 
         fun stop(context: Context) {
-            val intent = Intent(context.applicationContext, RecordingForegroundService::class.java).apply {
-                action = ACTION_STOP_SERVICE_ONLY
-            }
-            runCatching {
-                context.applicationContext.startService(intent)
+            pendingStopRequested = true
+            if (isServiceActive) {
+                runCatching {
+                    context.applicationContext.stopService(
+                        Intent(context.applicationContext, RecordingForegroundService::class.java)
+                    )
+                }
             }
         }
     }

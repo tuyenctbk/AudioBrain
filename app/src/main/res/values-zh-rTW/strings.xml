@@ -555,4 +555,11 @@
     <string name="info_fact_check_limit_skipped">查核次數已達上限 — 筆記已儲存（未啟用搜尋查核）。</string>
     <string name="snackbar_eco_lite_enabled">Eco Lite 模式已開啟 — 額度更耐用！</string>
     <string name="snackbar_grace_already_claimed">本月 +3 獎勵額度已領取。</string>
+    <string name="auth_error_cancelled">登入已取消。請選擇一個 Google 帳號以繼續。</string>
+    <string name="edit_title_required_error">儲存時標題不得為空。</string>
+    <string name="action_open_settings">開啟設定</string>
+    <string name="status_listening">正在傾聽…</string>
+    <string name="tap_to_record">輕觸麥克風開始錄音</string>
+    <string name="err_note_not_found_reverify">找不到此主題對應的原始筆記。</string>
+    <string name="edit_draft_name_required_error">草稿名稱不得為空。</string>
 </resources>

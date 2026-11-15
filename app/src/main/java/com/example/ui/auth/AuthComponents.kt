@@ -89,6 +89,15 @@ import kotlinx.coroutines.withContext
 
 private const val AUTH_TAG = "AudioBrainAuth"
 
+fun Context.findActivity(): Activity? {
+    var currentContext: Context? = this
+    while (currentContext is android.content.ContextWrapper) {
+        if (currentContext is Activity) return currentContext
+        currentContext = currentContext.baseContext
+    }
+    return currentContext as? Activity
+}
+
 fun attemptAutoSignIn(
     context: Context,
     credentialManager: CredentialManager,
@@ -122,8 +131,9 @@ fun attemptAutoSignIn(
 
     scope.launch {
         try {
+            val activityContext = context.findActivity() ?: context
             kotlinx.coroutines.withTimeoutOrNull(2500L) {
-                val result = credentialManager.getCredential(context, request)
+                val result = credentialManager.getCredential(activityContext, request)
                 val credential = result.credential
                 if (credential is CustomCredential && credential.type == TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                     val googleIdToken = GoogleIdTokenCredential.createFrom(credential.data).idToken
@@ -165,7 +175,7 @@ fun onGoogleSignInClicked(
 
     scope.launch {
         try {
-            val activityContext = context as? Activity
+            val activityContext = context.findActivity()
                 ?: throw IllegalStateException(context.getString(R.string.auth_error_requires_activity))
             val result = credentialManager.getCredential(activityContext, request)
             val credential = result.credential
@@ -209,6 +219,7 @@ fun signOutUser(
 @Composable
 fun AuthScreen(
     onAuthSuccess: () -> Unit,
+    onContinueAsGuest: () -> Unit = onAuthSuccess,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -423,6 +434,7 @@ fun AuthScreen(
                             scope = scope,
                             onAuthCancelled = {
                                 isLoading = false
+                                errorMessage = context.getString(R.string.auth_error_cancelled)
                             }
                         )
                     },
@@ -463,7 +475,7 @@ fun AuthScreen(
                 OutlinedButton(
                     onClick = {
                         errorMessage = null
-                        onAuthSuccess()
+                        onContinueAsGuest()
                     },
                     enabled = !isLoading,
                     shape = MaterialTheme.shapes.medium,

@@ -774,9 +774,13 @@ fun JournalScreen(
                             note.claimVerdicts.any { it.claim.equals(topic, ignoreCase = true) }
                     }
                 if (targetNote != null) {
-                    viewModel.reverifyNoteFromDashboard(targetNote)
-                } else if (!noteId.isNullOrBlank()) {
-                    onNoteClick(noteId)
+                    viewModel.reverifyNoteFromDashboard(targetNote, focusClaim = topic)
+                } else {
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.err_note_not_found_reverify)
+                        )
+                    }
                 }
             },
             onOpenNote = { noteId ->

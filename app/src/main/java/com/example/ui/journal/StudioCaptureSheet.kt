@@ -1,11 +1,13 @@
 package com.example.ui.journal
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
@@ -38,6 +40,7 @@ import androidx.compose.material.icons.rounded.AudioFile
 import androidx.compose.material.icons.rounded.BookmarkAdd
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.EditNote
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Mic
@@ -45,11 +48,12 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.TravelExplore
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -79,6 +83,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -105,7 +110,7 @@ fun StudioCaptureSheet(
     val pulseTransition = rememberInfiniteTransition(label = "studio_sheet_pulse")
     val idleRingScale by pulseTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.12f,
+        targetValue = 1.18f,
         animationSpec = infiniteRepeatable(
             animation = tween(1500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -113,7 +118,7 @@ fun StudioCaptureSheet(
         label = "idle_ring_scale"
     )
     val idleOuterRingAlpha by pulseTransition.animateFloat(
-        initialValue = 0.22f,
+        initialValue = 0.24f,
         targetValue = 0.06f,
         animationSpec = infiniteRepeatable(
             animation = tween(1500, easing = FastOutSlowInEasing),
@@ -123,9 +128,9 @@ fun StudioCaptureSheet(
     )
     val recRingScale by pulseTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.18f,
+        targetValue = 1.32f,
         animationSpec = infiniteRepeatable(
-            animation = tween(900, easing = FastOutSlowInEasing),
+            animation = tween(850, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "rec_ring_scale"
@@ -134,7 +139,7 @@ fun StudioCaptureSheet(
         initialValue = 0.35f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(650),
+            animation = tween(620),
             repeatMode = RepeatMode.Reverse
         ),
         label = "rec_pulse_alpha"
@@ -224,6 +229,7 @@ fun StudioCaptureSheet(
                                 CompactRecordingContent(
                                     recordingState = recordingState,
                                     recPulseAlpha = recPulseAlpha,
+                                    recRingScale = recRingScale,
                                     onCancelRecording = onCancelRecording,
                                     onTogglePauseRecording = onTogglePauseRecording,
                                     onSaveDraft = onSaveDraft,
@@ -261,6 +267,15 @@ fun CrossScreenRecordingSheet(
         ),
         label = "cross_screen_pulse_alpha"
     )
+    val ringScale by pulseTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.28f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(850, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "cross_screen_ring_scale"
+    )
 
     Box(
         contentAlignment = Alignment.BottomCenter,
@@ -286,6 +301,7 @@ fun CrossScreenRecordingSheet(
                 CompactRecordingContent(
                     recordingState = recordingState,
                     recPulseAlpha = pulseAlpha,
+                    recRingScale = ringScale,
                     onCancelRecording = onCancelRecording,
                     onTogglePauseRecording = onTogglePauseRecording,
                     onSaveDraft = onSaveDraft,
@@ -393,9 +409,10 @@ private fun ExpandedIdleContent(
             OutlinedButton(
                 onClick = onImportAudio,
                 shape = MaterialTheme.shapes.medium,
-                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
                 modifier = Modifier
-                    .height(50.dp)
+                    .weight(1f)
+                    .height(48.dp)
                     .testTag("import_audio_button")
             ) {
                 Icon(
@@ -404,22 +421,35 @@ private fun ExpandedIdleContent(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.action_import_short), style = MaterialTheme.typography.labelLarge)
+                Text(
+                    text = stringResource(R.string.action_import_short),
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
 
-            PulsingRecordButton(
-                idleRingScale = idleRingScale,
-                idleOuterRingAlpha = idleOuterRingAlpha,
+            Spacer(modifier = Modifier.width(12.dp))
+
+            CentralVoiceToggleFab(
+                isRecording = false,
+                isPaused = false,
                 compact = false,
+                pulseScale = idleRingScale,
+                pulseAlpha = idleOuterRingAlpha,
+                latestAmplitude = 0.08f,
                 onClick = onStartRecording
             )
+
+            Spacer(modifier = Modifier.width(12.dp))
 
             OutlinedButton(
                 onClick = onOpenTypeMemo,
                 shape = MaterialTheme.shapes.medium,
-                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
                 modifier = Modifier
-                    .height(50.dp)
+                    .weight(1f)
+                    .height(48.dp)
                     .testTag("type_memo_button")
             ) {
                 Icon(
@@ -428,7 +458,12 @@ private fun ExpandedIdleContent(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(R.string.action_type_short), style = MaterialTheme.typography.labelLarge)
+                Text(
+                    text = stringResource(R.string.action_type_short),
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }
@@ -460,10 +495,13 @@ private fun CompactIdleContent(
             )
         }
 
-        PulsingRecordButton(
-            idleRingScale = idleRingScale,
-            idleOuterRingAlpha = idleOuterRingAlpha,
+        CentralVoiceToggleFab(
+            isRecording = false,
+            isPaused = false,
             compact = true,
+            pulseScale = idleRingScale,
+            pulseAlpha = idleOuterRingAlpha,
+            latestAmplitude = 0.08f,
             onClick = onStartRecording
         )
 
@@ -482,46 +520,154 @@ private fun CompactIdleContent(
     }
 }
 
+/**
+ * Central Floating Action Button (FAB) that toggles voice recording in-place,
+ * featuring a multi-ring pulsing sonar halo and live microphone amplitude reaction
+ * to visually indicate that the app is actively listening.
+ */
 @Composable
-private fun PulsingRecordButton(
-    idleRingScale: Float,
-    idleOuterRingAlpha: Float,
+private fun CentralVoiceToggleFab(
+    isRecording: Boolean,
+    isPaused: Boolean,
     compact: Boolean,
-    onClick: () -> Unit
+    pulseScale: Float,
+    pulseAlpha: Float,
+    latestAmplitude: Float,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val buttonHeight = if (compact) 48.dp else 60.dp
-    val ringWidth = if (compact) 144.dp else 156.dp
+    val activeListening = isRecording && !isPaused
+    val amplitudeBoost by animateFloatAsState(
+        targetValue = if (activeListening) {
+            1f + (latestAmplitude.coerceIn(0.08f, 1f) * 0.22f)
+        } else {
+            1f
+        },
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "fab_amp_boost"
+    )
+    val containerColor by animateColorAsState(
+        targetValue = when {
+            !isRecording -> MaterialTheme.colorScheme.primary
+            isPaused -> MaterialTheme.colorScheme.tertiary
+            else -> MaterialTheme.colorScheme.error
+        },
+        animationSpec = tween(220),
+        label = "fab_container_color"
+    )
+    val contentColor by animateColorAsState(
+        targetValue = when {
+            !isRecording -> MaterialTheme.colorScheme.onPrimary
+            isPaused -> MaterialTheme.colorScheme.onTertiary
+            else -> MaterialTheme.colorScheme.onError
+        },
+        animationSpec = tween(220),
+        label = "fab_content_color"
+    )
 
-    Box(contentAlignment = Alignment.Center) {
+    val fabSize = if (compact) 52.dp else 68.dp
+    val outerHaloSize = if (compact) 68.dp else 92.dp
+    val innerHaloSize = if (compact) 60.dp else 80.dp
+    val actionLabel = if (isRecording) {
+        stringResource(R.string.action_stop_analyze)
+    } else {
+        stringResource(R.string.action_record)
+    }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = modifier
+    ) {
         Box(
-            modifier = Modifier
-                .height(buttonHeight)
-                .width(ringWidth)
-                .scale(idleRingScale)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = idleOuterRingAlpha))
-        )
-        Button(
-            onClick = onClick,
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ),
-            contentPadding = PaddingValues(horizontal = if (compact) 20.dp else 26.dp),
-            modifier = Modifier
-                .height(buttonHeight)
-                .testTag("record_button")
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(outerHaloSize)
         ) {
-            Icon(
-                imageVector = Icons.Rounded.Mic,
-                contentDescription = stringResource(R.string.action_record),
-                modifier = Modifier.size(if (compact) 20.dp else 24.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
+            // Outer sonar pulse ring
+            if (!isPaused) {
+                Box(
+                    modifier = Modifier
+                        .size(outerHaloSize)
+                        .scale(pulseScale * amplitudeBoost)
+                        .clip(CircleShape)
+                        .background(
+                            containerColor.copy(
+                                alpha = if (activeListening) (pulseAlpha * 0.28f).coerceIn(0.08f, 0.32f)
+                                else pulseAlpha
+                            )
+                        )
+                )
+                // Inner acoustic resonance ring
+                Box(
+                    modifier = Modifier
+                        .size(innerHaloSize)
+                        .scale(((pulseScale + 1f) / 2f) * amplitudeBoost)
+                        .clip(CircleShape)
+                        .background(
+                            containerColor.copy(
+                                alpha = if (activeListening) (pulseAlpha * 0.42f).coerceIn(0.14f, 0.46f)
+                                else (pulseAlpha * 1.3f).coerceAtMost(0.32f)
+                            )
+                        )
+                )
+            }
+
+            if (compact) {
+                FloatingActionButton(
+                    onClick = onClick,
+                    shape = CircleShape,
+                    containerColor = containerColor,
+                    contentColor = contentColor,
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 4.dp,
+                        pressedElevation = 8.dp
+                    ),
+                    modifier = Modifier
+                        .size(fabSize)
+                        .testTag(if (isRecording) "stop_record_button" else "record_button")
+                ) {
+                    Icon(
+                        imageVector = if (isRecording) Icons.Rounded.Stop else Icons.Rounded.Mic,
+                        contentDescription = actionLabel,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            } else {
+                LargeFloatingActionButton(
+                    onClick = onClick,
+                    shape = CircleShape,
+                    containerColor = containerColor,
+                    contentColor = contentColor,
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 6.dp,
+                        pressedElevation = 10.dp
+                    ),
+                    modifier = Modifier
+                        .size(fabSize)
+                        .testTag(if (isRecording) "stop_record_button" else "record_button")
+                ) {
+                    Icon(
+                        imageVector = if (isRecording) Icons.Rounded.Stop else Icons.Rounded.Mic,
+                        contentDescription = actionLabel,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+            }
+        }
+
+        if (!compact) {
             Text(
-                text = stringResource(R.string.action_record),
-                style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium
+                text = if (isRecording) {
+                    stringResource(R.string.action_stop_analyze)
+                } else {
+                    stringResource(R.string.tap_to_record)
+                },
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                color = if (activeListening) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -537,6 +683,8 @@ private fun ExpandedRecordingContent(
     onSaveDraft: () -> Unit,
     onStopRecording: () -> Unit
 ) {
+    val latestAmplitude = recordingState.amplitudes.lastOrNull() ?: 0.08f
+
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -550,6 +698,7 @@ private fun ExpandedRecordingContent(
                 Box(
                     modifier = Modifier
                         .size(10.dp)
+                        .scale(if (recordingState.isPaused) 1f else recRingScale.coerceAtMost(1.25f))
                         .clip(CircleShape)
                         .background(
                             if (recordingState.isPaused) MaterialTheme.colorScheme.tertiary
@@ -560,11 +709,19 @@ private fun ExpandedRecordingContent(
                     text = if (recordingState.isPaused) {
                         stringResource(R.string.status_paused)
                     } else {
-                        stringResource(R.string.status_recording)
+                        stringResource(R.string.status_listening)
                     },
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                if (!recordingState.isPaused) {
+                    Icon(
+                        imageVector = Icons.Rounded.GraphicEq,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error.copy(alpha = recPulseAlpha),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
             Surface(
                 color = if (recordingState.isPaused) MaterialTheme.colorScheme.tertiaryContainer
@@ -584,51 +741,78 @@ private fun ExpandedRecordingContent(
         AudioWaveformCanvas(
             amplitudes = recordingState.amplitudes,
             isPaused = recordingState.isPaused,
-            height = 64.dp
+            height = 60.dp
         )
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
-            OutlinedButton(
-                onClick = onCancelRecording,
-                contentPadding = PaddingValues(horizontal = 12.dp),
-                modifier = Modifier
-                    .height(48.dp)
-                    .testTag("cancel_record_button")
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f)
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Close,
-                    contentDescription = stringResource(R.string.action_cancel),
-                    modifier = Modifier.size(18.dp)
-                )
+                OutlinedButton(
+                    onClick = onCancelRecording,
+                    contentPadding = PaddingValues(horizontal = 10.dp),
+                    modifier = Modifier
+                        .height(48.dp)
+                        .testTag("cancel_record_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = stringResource(R.string.action_cancel),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                OutlinedButton(
+                    onClick = onTogglePauseRecording,
+                    contentPadding = PaddingValues(horizontal = 10.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                        .testTag("pause_record_button")
+                ) {
+                    Icon(
+                        imageVector = if (recordingState.isPaused) Icons.Rounded.PlayArrow
+                        else Icons.Rounded.Pause,
+                        contentDescription = if (recordingState.isPaused) {
+                            stringResource(R.string.action_resume)
+                        } else {
+                            stringResource(R.string.action_pause)
+                        },
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (recordingState.isPaused) stringResource(R.string.action_resume)
+                        else stringResource(R.string.action_pause),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
             }
-            OutlinedButton(
-                onClick = onTogglePauseRecording,
-                contentPadding = PaddingValues(horizontal = 14.dp),
-                modifier = Modifier
-                    .height(48.dp)
-                    .testTag("pause_record_button")
-            ) {
-                Icon(
-                    imageVector = if (recordingState.isPaused) Icons.Rounded.PlayArrow
-                    else Icons.Rounded.Pause,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = if (recordingState.isPaused) stringResource(R.string.action_resume)
-                    else stringResource(R.string.action_pause),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            CentralVoiceToggleFab(
+                isRecording = true,
+                isPaused = recordingState.isPaused,
+                compact = false,
+                pulseScale = recRingScale,
+                pulseAlpha = recPulseAlpha,
+                latestAmplitude = latestAmplitude,
+                onClick = onStopRecording
+            )
+
+            Spacer(modifier = Modifier.width(10.dp))
+
             OutlinedButton(
                 onClick = onSaveDraft,
-                contentPadding = PaddingValues(horizontal = 14.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp),
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp)
@@ -643,44 +827,9 @@ private fun ExpandedRecordingContent(
                 Text(
                     text = stringResource(R.string.action_save_draft),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.labelMedium
                 )
-            }
-        }
-
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (!recordingState.isPaused) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                        .scale(scaleX = 1.02f, scaleY = recRingScale.coerceAtMost(1.10f))
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f))
-                )
-            }
-            Button(
-                onClick = onStopRecording,
-                shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .testTag("stop_record_button")
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Stop,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.action_stop_analyze))
             }
         }
     }
@@ -690,46 +839,19 @@ private fun ExpandedRecordingContent(
 private fun CompactRecordingContent(
     recordingState: RecordingState,
     recPulseAlpha: Float,
+    recRingScale: Float = 1.15f,
     onCancelRecording: () -> Unit,
     onTogglePauseRecording: () -> Unit,
     onSaveDraft: (() -> Unit)? = null,
     onStopRecording: () -> Unit
 ) {
+    val latestAmplitude = recordingState.amplitudes.lastOrNull() ?: 0.08f
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Box(
-            modifier = Modifier
-                .size(10.dp)
-                .clip(CircleShape)
-                .background(
-                    if (recordingState.isPaused) MaterialTheme.colorScheme.tertiary
-                    else MaterialTheme.colorScheme.error.copy(alpha = recPulseAlpha)
-                )
-        )
-        Surface(
-            color = if (recordingState.isPaused) MaterialTheme.colorScheme.tertiaryContainer
-            else MaterialTheme.colorScheme.primaryContainer,
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Text(
-                text = formatDuration(recordingState.elapsedSeconds),
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                color = if (recordingState.isPaused) MaterialTheme.colorScheme.onTertiaryContainer
-                else MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-            )
-        }
-
-        AudioWaveformCanvas(
-            amplitudes = recordingState.amplitudes.takeLast(14),
-            isPaused = recordingState.isPaused,
-            height = 28.dp,
-            modifier = Modifier.weight(1f)
-        )
-
         IconButton(
             onClick = onCancelRecording,
             modifier = Modifier
@@ -742,6 +864,51 @@ private fun CompactRecordingContent(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+
+        Surface(
+            color = if (recordingState.isPaused) MaterialTheme.colorScheme.tertiaryContainer
+            else MaterialTheme.colorScheme.primaryContainer,
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (recordingState.isPaused) MaterialTheme.colorScheme.tertiary
+                            else MaterialTheme.colorScheme.error.copy(alpha = recPulseAlpha)
+                        )
+                )
+                Text(
+                    text = formatDuration(recordingState.elapsedSeconds),
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = if (recordingState.isPaused) MaterialTheme.colorScheme.onTertiaryContainer
+                    else MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+        }
+
+        AudioWaveformCanvas(
+            amplitudes = recordingState.amplitudes.takeLast(10),
+            isPaused = recordingState.isPaused,
+            height = 28.dp,
+            modifier = Modifier.weight(1f)
+        )
+
+        CentralVoiceToggleFab(
+            isRecording = true,
+            isPaused = recordingState.isPaused,
+            compact = true,
+            pulseScale = recRingScale,
+            pulseAlpha = recPulseAlpha,
+            latestAmplitude = latestAmplitude,
+            onClick = onStopRecording
+        )
 
         IconButton(
             onClick = onTogglePauseRecording,
@@ -768,24 +935,6 @@ private fun CompactRecordingContent(
                     imageVector = Icons.Rounded.BookmarkAdd,
                     contentDescription = stringResource(R.string.action_save_draft),
                     tint = MaterialTheme.colorScheme.secondary
-                )
-            }
-        }
-
-        Surface(
-            color = MaterialTheme.colorScheme.primary,
-            shape = CircleShape,
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onStopRecording)
-                .testTag("stop_record_button")
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = Icons.Rounded.Stop,
-                    contentDescription = stringResource(R.string.action_stop_analyze),
-                    tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }
