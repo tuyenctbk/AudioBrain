@@ -984,23 +984,11 @@ class JournalViewModel(
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Digest generation failed", e)
-                if (currentUserId == VoiceNotesRepository.GUEST_USER_ID) {
-                    _digestState.value = DigestUiState(
-                        isStreaming = false,
-                        focusTitle = focusTitle,
-                        content = "### 🎙️ Cross-Note Synthesis Overview\n\n- **Clean Energy**: Reviewed IRS Clean Vehicle Credit guidelines for 2026. Verified dealer point-of-sale transfer mechanism.\n- **Action Items**: 5 actionable checklist items synchronized across notes.\n- **Fact-Check Radar**: 3 grounded claims confirmed via live Google Search sources.",
-                        sources = listOf(
-                            FactSource(title = "IRS Clean Vehicle Guidance", url = "https://www.irs.gov/clean-vehicle-credits")
-                        ),
-                        errorMessage = null
-                    )
-                } else {
-                    quotaManager.refundInteraction(QuotaFeature.DIGEST)
-                    _digestState.value = _digestState.value.copy(
-                        isStreaming = false,
-                        errorMessage = e.localizedMessage ?: context.getString(R.string.err_digest_failed)
-                    )
-                }
+                quotaManager.refundInteraction(QuotaFeature.DIGEST)
+                _digestState.value = _digestState.value.copy(
+                    isStreaming = false,
+                    errorMessage = e.localizedMessage ?: context.getString(R.string.err_digest_failed)
+                )
             }
         }
     }

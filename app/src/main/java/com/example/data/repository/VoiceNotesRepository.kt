@@ -253,6 +253,35 @@ class VoiceNotesRepository(
         } catch (e: Exception) {
             return Result.failure(e)
         }
+        if (uid == GUEST_USER_ID || auth.currentUser == null) {
+            val localId = "local_note_${System.currentTimeMillis()}"
+            val newNote = VoiceNote(
+                id = localId,
+                userId = GUEST_USER_ID,
+                title = title.trim().ifBlank { "Untitled Voice Note" }.take(200),
+                summary = summary.trim().take(4000),
+                transcript = transcript.trim().take(50000),
+                category = category.label,
+                detectedTone = detectedTone.value,
+                durationSeconds = durationSeconds.coerceIn(0L, 86400L),
+                actionItems = actionItems.take(30),
+                completedActionIndices = emptyList(),
+                decisions = decisions.map { it.trim() }.filter { it.isNotBlank() }.take(20),
+                claimsToVerify = claimsToVerify.take(15),
+                claimVerdicts = claimVerdicts.take(15),
+                factCheckSummary = factCheckSummary.trim().take(20000),
+                factCheckStatus = factCheckStatus.value,
+                searchQueries = searchQueries.take(20),
+                sources = sources.take(20),
+                flashcards = flashcards.take(20),
+                pinned = pinned,
+                tags = NoteTagHelper.normalizeTags(tags),
+                createdAt = Timestamp.now(),
+                updatedAt = Timestamp.now()
+            )
+            guestNotesFlow.value = listOf(newNote) + guestNotesFlow.value
+            return Result.success(localId)
+        }
         val docRef = notesCollection(uid).document()
         val payload = mapOf(
             "userId" to uid,
@@ -344,6 +373,25 @@ class VoiceNotesRepository(
         } catch (e: Exception) {
             return Result.failure(e)
         }
+        if (uid == GUEST_USER_ID || auth.currentUser == null) {
+            guestNotesFlow.value = guestNotesFlow.value.map {
+                if (it.id == noteId) {
+                    it.copy(
+                        title = title.trim().ifBlank { "Untitled Voice Note" }.take(200),
+                        summary = summary.trim().take(4000),
+                        transcript = transcript.trim().take(50000),
+                        category = category.label,
+                        detectedTone = detectedTone?.value ?: it.detectedTone,
+                        actionItems = actionItems.take(30),
+                        claimsToVerify = claimsToVerify.take(15),
+                        tags = NoteTagHelper.normalizeTags(tags),
+                        decisions = decisions?.map { d -> d.trim() }?.filter { d -> d.isNotBlank() }?.take(20) ?: it.decisions,
+                        updatedAt = Timestamp.now()
+                    )
+                } else it
+            }
+            return Result.success(Unit)
+        }
         val docRef = notesCollection(uid).document(noteId)
         val payload = buildMap<String, Any> {
             put("title", title.trim().ifBlank { "Untitled Voice Note" }.take(200))
@@ -381,6 +429,17 @@ class VoiceNotesRepository(
         } catch (e: Exception) {
             return Result.failure(e)
         }
+        if (uid == GUEST_USER_ID || auth.currentUser == null) {
+            guestNotesFlow.value = guestNotesFlow.value.map {
+                if (it.id == noteId) {
+                    it.copy(
+                        tags = NoteTagHelper.normalizeTags(tags),
+                        updatedAt = Timestamp.now()
+                    )
+                } else it
+            }
+            return Result.success(Unit)
+        }
         val docRef = notesCollection(uid).document(noteId)
         val payload = mapOf(
             "tags" to NoteTagHelper.normalizeTags(tags),
@@ -410,6 +469,22 @@ class VoiceNotesRepository(
             requireUserId()
         } catch (e: Exception) {
             return Result.failure(e)
+        }
+        if (uid == GUEST_USER_ID || auth.currentUser == null) {
+            guestNotesFlow.value = guestNotesFlow.value.map {
+                if (it.id == noteId) {
+                    it.copy(
+                        factCheckSummary = factCheckSummary.trim().take(20000),
+                        factCheckStatus = factCheckStatus.value,
+                        searchQueries = searchQueries.take(20),
+                        sources = sources.take(20),
+                        claimsToVerify = claimsToVerify.take(15),
+                        claimVerdicts = claimVerdicts.take(15),
+                        updatedAt = Timestamp.now()
+                    )
+                } else it
+            }
+            return Result.success(Unit)
         }
         val docRef = notesCollection(uid).document(noteId)
         val payload = mapOf(
@@ -441,6 +516,17 @@ class VoiceNotesRepository(
         } catch (e: Exception) {
             return Result.failure(e)
         }
+        if (uid == GUEST_USER_ID || auth.currentUser == null) {
+            guestNotesFlow.value = guestNotesFlow.value.map {
+                if (it.id == noteId) {
+                    it.copy(
+                        flashcards = flashcards.take(20),
+                        updatedAt = Timestamp.now()
+                    )
+                } else it
+            }
+            return Result.success(Unit)
+        }
         val docRef = notesCollection(uid).document(noteId)
         val payload = mapOf(
             "flashcards" to flashcards.take(20).map { it.toMap() },
@@ -467,6 +553,18 @@ class VoiceNotesRepository(
         } catch (e: Exception) {
             return Result.failure(e)
         }
+        if (uid == GUEST_USER_ID || auth.currentUser == null) {
+            guestNotesFlow.value = guestNotesFlow.value.map {
+                if (it.id == noteId) {
+                    it.copy(
+                        summary = summary.trim().take(4000),
+                        detectedTone = detectedTone.value,
+                        updatedAt = Timestamp.now()
+                    )
+                } else it
+            }
+            return Result.success(Unit)
+        }
         val docRef = notesCollection(uid).document(noteId)
         val payload = mapOf(
             "summary" to summary.trim().take(4000),
@@ -489,6 +587,10 @@ class VoiceNotesRepository(
             requireUserId()
         } catch (e: Exception) {
             return Result.failure(e)
+        }
+        if (uid == GUEST_USER_ID || auth.currentUser == null) {
+            guestNotesFlow.value = guestNotesFlow.value.filterNot { it.id == noteId }
+            return Result.success(Unit)
         }
         val noteRef = notesCollection(uid).document(noteId)
         return try {
@@ -647,7 +749,7 @@ class VoiceNotesRepository(
 
     fun observeFactCheckHistory(userId: String): Flow<List<FactCheckSearchItem>> = flow {
         if (userId == GUEST_USER_ID || auth.currentUser == null) {
-            emit(demoFactCheckHistory)
+            emitAll(guestFactCheckHistoryFlow)
             return@flow
         }
         val path = "users/$userId/fact_check_history"
@@ -697,6 +799,29 @@ class VoiceNotesRepository(
             return Result.failure(e)
         }
 
+        if (uid == GUEST_USER_ID || auth.currentUser == null) {
+            val historyId = FactCheckHistoryHelper.generateHistoryId(cleanQuery)
+            val existing = guestFactCheckHistoryFlow.value.firstOrNull { it.id == historyId }
+            val count = (existing?.verificationCount ?: 0L) + 1L
+            val resolvedTopic = topic?.trim()?.take(200) ?: FactCheckHistoryHelper.cleanTopicLabel(cleanQuery)
+            val item = FactCheckSearchItem(
+                id = historyId,
+                userId = GUEST_USER_ID,
+                query = cleanQuery,
+                topic = resolvedTopic,
+                verificationCount = count,
+                lastStatus = status.value,
+                lastExplanation = explanation.trim().take(2000),
+                sourceUrl = sourceUrl?.trim()?.take(2000) ?: "",
+                lastNoteId = noteId?.trim()?.take(100) ?: "",
+                lastNoteTitle = noteTitle?.trim()?.take(300) ?: "",
+                createdAt = existing?.createdAt ?: Timestamp.now(),
+                updatedAt = Timestamp.now()
+            )
+            guestFactCheckHistoryFlow.value = listOf(item) + guestFactCheckHistoryFlow.value.filterNot { it.id == historyId }
+            return Result.success(Unit)
+        }
+
         val historyId = FactCheckHistoryHelper.generateHistoryId(cleanQuery)
         val docRef = factCheckHistoryCollection(uid).document(historyId)
 
@@ -743,6 +868,10 @@ class VoiceNotesRepository(
         } catch (e: Exception) {
             return Result.failure(e)
         }
+        if (uid == GUEST_USER_ID || auth.currentUser == null) {
+            guestFactCheckHistoryFlow.value = guestFactCheckHistoryFlow.value.filterNot { it.id == historyId }
+            return Result.success(Unit)
+        }
         val docRef = factCheckHistoryCollection(uid).document(historyId)
         return try {
             docRef.delete().await()
@@ -757,163 +886,9 @@ class VoiceNotesRepository(
 
     companion object {
         const val PREFS_DOC_ID = "preferences"
-        const val GUEST_USER_ID = "guest_demo_user"
+        const val GUEST_USER_ID = "guest_user"
 
-        val demoNotes: List<VoiceNote> = listOf(
-            VoiceNote(
-                id = "demo_note_1",
-                userId = GUEST_USER_ID,
-                title = "EV Tax Credit & Clean Energy Incentives (2026)",
-                summary = "Comprehensive review of the federal Clean Vehicle Tax Credit rules for 2026. Includes price caps, critical mineral sourcing requirements, and point-of-sale dealer discount mechanisms verified against IRS and Energy.gov guidelines.",
-                transcript = "[00:00] Today we're reviewing the 2026 Clean Vehicle Tax Credit rules.\n[00:08] The critical mineral and battery component requirements have reached 80% this year.\n[00:19] Buyers can transfer the $7,500 credit directly to registered dealers at point of sale.\n[00:32] Income caps remain $150k for single filers and $300k for married couples.\n[00:45] Next steps: verify eligible vehicle VINs on the fueleconomy.gov portal.",
-                category = NoteCategory.RESEARCH.label,
-                detectedTone = NoteTopicTone.TECHNICAL.value,
-                durationSeconds = 52L,
-                pinned = true,
-                tags = listOf("research", "finance", "tax", "ideas"),
-                actionItems = listOf(
-                    "Verify vehicle VIN eligibility on fueleconomy.gov portal",
-                    "Download IRS Form 8936 for clean vehicle tax credits",
-                    "Confirm dealer point-of-sale transfer registration"
-                ),
-                completedActionIndices = listOf(0L),
-                decisions = listOf(
-                    "Utilize point-of-sale tax credit transfer rather than tax return filing",
-                    "Focus search on vehicles meeting 80% critical mineral domestic sourcing"
-                ),
-                claimsToVerify = listOf(
-                    "Federal EV tax credit value is up to $7,500 in 2026",
-                    "Point-of-sale credit transfer is available at registered dealerships",
-                    "Single filer income cap is $150,000"
-                ),
-                claimVerdicts = listOf(
-                    ClaimVerdict(
-                        claim = "Federal EV tax credit value is up to $7,500 in 2026",
-                        status = ClaimVerdictStatus.SUPPORTED.value,
-                        explanation = "Confirmed via IRS Section 30D guidance. Eligible clean vehicles qualify for up to $7,500 divided between critical minerals and battery component criteria."
-                    ),
-                    ClaimVerdict(
-                        claim = "Point-of-sale credit transfer is available at registered dealerships",
-                        status = ClaimVerdictStatus.SUPPORTED.value,
-                        explanation = "IRS Energy Credits Online allows registered dealers to apply the credit directly at time of purchase as cash down payment."
-                    ),
-                    ClaimVerdict(
-                        claim = "Single filer income cap is $150,000",
-                        status = ClaimVerdictStatus.UPDATED.value,
-                        explanation = "Modified AGI limits are $150,000 for single filers, $225,000 for head of household, and $300,000 for married couples filing jointly."
-                    )
-                ),
-                factCheckSummary = "Verified 3 claims against IRS Section 30D and Energy.gov guidelines. Mineral requirements confirmed at current threshold, and point-of-sale dealer credit transfer verified.",
-                factCheckStatus = FactCheckStatus.VERIFIED.value,
-                sources = listOf(
-                    FactSource(title = "IRS Clean Vehicle Credit Guidance (Section 30D)", url = "https://www.irs.gov/clean-vehicles"),
-                    FactSource(title = "FuelEconomy.gov Eligible Clean Vehicles", url = "https://www.fueleconomy.gov")
-                ),
-                flashcards = listOf(
-                    FlashcardItem(question = "What is the maximum federal EV tax credit amount?", answer = "Up to $7,500 under IRS Section 30D."),
-                    FlashcardItem(question = "What are the modified AGI income caps for single filers?", answer = "$150,000 modified adjusted gross income.")
-                ),
-                createdAt = Timestamp(System.currentTimeMillis() / 1000 - 3600, 0),
-                updatedAt = Timestamp(System.currentTimeMillis() / 1000 - 1800, 0)
-            ),
-            VoiceNote(
-                id = "demo_note_2",
-                userId = GUEST_USER_ID,
-                title = "AI Architecture & Streaming Latency Review",
-                summary = "System design notes on Gemini Flash audio transcription and Firestore sync pipeline. Target end-to-end processing latency under 1.8 seconds with background noise filtering.",
-                transcript = "[00:00] Meeting on AudioBrain mobile performance and AI inference pipeline.\n[00:10] Current Gemini Flash audio chunking achieves 1.4s average turnaround.\n[00:22] We verified that App Check attestation provides secure client access without leaking keys.\n[00:35] Need to ensure offline drafts queue cleanly when airplane mode is enabled.",
-                category = NoteCategory.MEETING.label,
-                detectedTone = NoteTopicTone.TECHNICAL.value,
-                durationSeconds = 42L,
-                pinned = true,
-                tags = listOf("meeting", "work", "todo"),
-                actionItems = listOf(
-                    "Benchmark audio chunking streaming latency under 1.5 seconds",
-                    "Verify offline queue persistence in PendingMemoStore"
-                ),
-                completedActionIndices = emptyList(),
-                decisions = listOf(
-                    "Standardize on 16kHz mono audio recording for optimal speech transcription",
-                    "Enable local SQLite/Room caching for pending voice drafts"
-                ),
-                claimsToVerify = listOf(
-                    "Gemini Flash supports direct audio transcription without server transcoding"
-                ),
-                claimVerdicts = listOf(
-                    ClaimVerdict(
-                        claim = "Gemini Flash supports direct audio transcription",
-                        status = ClaimVerdictStatus.SUPPORTED.value,
-                        explanation = "Gemini 1.5/2.0 Flash natively accepts raw audio PCM/AAC waveforms in multipart requests."
-                    )
-                ),
-                factCheckSummary = "Confirmed multimodal streaming support in Gemini API documentation.",
-                factCheckStatus = FactCheckStatus.VERIFIED.value,
-                sources = listOf(
-                    FactSource(title = "Google AI Gemini Multimodal Audio Docs", url = "https://ai.google.dev")
-                ),
-                flashcards = listOf(
-                    FlashcardItem(question = "What audio sample rate is optimal for speech transcription?", answer = "16,000 Hz (16kHz) mono PCM or AAC.")
-                ),
-                createdAt = Timestamp(System.currentTimeMillis() / 1000 - 7200, 0),
-                updatedAt = Timestamp(System.currentTimeMillis() / 1000 - 3600, 0)
-            ),
-            VoiceNote(
-                id = "demo_note_3",
-                userId = GUEST_USER_ID,
-                title = "Morning Reflections & Book Notes: Atomic Habits",
-                summary = "Reflections on habit stacking and implementation intentions. Focus on 1% daily compounding improvements rather than ambitious sporadic goals.",
-                transcript = "[00:00] Quick morning commute thought while listening to James Clear.\n[00:09] The two-minute rule: when you start a new habit, it should take less than two minutes.\n[00:25] Pair recording a voice memo immediately after morning coffee.",
-                category = NoteCategory.JOURNAL.label,
-                detectedTone = NoteTopicTone.CASUAL.value,
-                durationSeconds = 31L,
-                pinned = false,
-                tags = listOf("journal", "ideas", "personal"),
-                actionItems = listOf(
-                    "Practice the 2-minute habit rule for morning voice journaling",
-                    "Review daily digest summary each evening at 8 PM"
-                ),
-                completedActionIndices = listOf(0L),
-                decisions = listOf(
-                    "Journal every morning directly after coffee using the quick record home widget"
-                ),
-                claimsToVerify = emptyList(),
-                claimVerdicts = emptyList(),
-                factCheckStatus = FactCheckStatus.NONE.value,
-                flashcards = listOf(
-                    FlashcardItem(question = "What is the 2-minute rule in Atomic Habits?", answer = "Scale down new habits until they take under two minutes to start.")
-                ),
-                createdAt = Timestamp(System.currentTimeMillis() / 1000 - 86400, 0),
-                updatedAt = Timestamp(System.currentTimeMillis() / 1000 - 86400, 0)
-            )
-        )
-
-        val demoFactCheckHistory: List<FactCheckSearchItem> = listOf(
-            FactCheckSearchItem(
-                id = "history_1",
-                userId = GUEST_USER_ID,
-                query = "irs clean vehicle tax credit rules 2026",
-                topic = "EV Tax Credit Rules (2026)",
-                verificationCount = 5L,
-                lastStatus = ClaimVerdictStatus.SUPPORTED.value,
-                lastExplanation = "Confirmed via IRS Section 30D guidance. Eligible clean vehicles qualify for up to $7,500.",
-                sourceUrl = "https://www.irs.gov/clean-vehicles",
-                lastNoteId = "demo_note_1",
-                lastNoteTitle = "EV Tax Credit & Clean Energy Incentives (2026)"
-            ),
-            FactCheckSearchItem(
-                id = "history_2",
-                userId = GUEST_USER_ID,
-                query = "gemini flash audio multimodal streaming latency",
-                topic = "Gemini Flash Audio Latency",
-                verificationCount = 3L,
-                lastStatus = ClaimVerdictStatus.SUPPORTED.value,
-                lastExplanation = "Gemini natively accepts raw audio PCM/AAC waveforms in multipart requests.",
-                sourceUrl = "https://ai.google.dev",
-                lastNoteId = "demo_note_2",
-                lastNoteTitle = "AI Architecture & Streaming Latency Review"
-            )
-        )
-
-        val guestNotesFlow = MutableStateFlow(demoNotes)
+        val guestNotesFlow = MutableStateFlow<List<VoiceNote>>(emptyList())
+        val guestFactCheckHistoryFlow = MutableStateFlow<List<FactCheckSearchItem>>(emptyList())
     }
 }
