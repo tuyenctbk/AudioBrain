@@ -44,6 +44,7 @@ import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.OpenInFull
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Stop
@@ -102,6 +103,7 @@ fun StudioCaptureSheet(
     onOpenTypeMemo: () -> Unit,
     onImportAudio: () -> Unit,
     onToggleAutoFactCheck: (Boolean) -> Unit,
+    onOpenRecordingScreen: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(true) }
@@ -171,6 +173,7 @@ fun StudioCaptureSheet(
                 SheetDragHandle(
                     isExpanded = isExpanded,
                     onToggle = { isExpanded = !isExpanded },
+                    onOpenRecordingScreen = onOpenRecordingScreen,
                     onDragDelta = { delta ->
                         dragAccumulated += delta
                         if (dragAccumulated > 48f) {
@@ -316,19 +319,16 @@ fun CrossScreenRecordingSheet(
 private fun SheetDragHandle(
     isExpanded: Boolean,
     onToggle: () -> Unit,
+    onOpenRecordingScreen: (() -> Unit)? = null,
     onDragDelta: (Float) -> Unit,
     onDragReset: () -> Unit
 ) {
     val handleCd = stringResource(
         if (isExpanded) R.string.cd_collapse_recording_sheet else R.string.cd_expand_recording_sheet
     )
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onToggle)
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
                     onDragEnd = { onDragReset() },
@@ -338,26 +338,52 @@ private fun SheetDragHandle(
                     }
                 )
             }
-            .padding(vertical = 8.dp)
-            .semantics {
-                contentDescription = handleCd
-            }
-            .testTag("capture_sheet_handle")
     ) {
-        Box(
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
             modifier = Modifier
-                .width(38.dp)
-                .height(4.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.outline)
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        Icon(
-            imageVector = if (isExpanded) Icons.Rounded.KeyboardArrowDown else Icons.Rounded.KeyboardArrowUp,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(16.dp)
-        )
+                .align(Alignment.Center)
+                .clip(RoundedCornerShape(12.dp))
+                .clickable(onClick = onToggle)
+                .padding(horizontal = 24.dp, vertical = 10.dp)
+                .semantics {
+                    contentDescription = handleCd
+                }
+                .testTag("capture_sheet_handle")
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(38.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.outline)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Icon(
+                imageVector = if (isExpanded) Icons.Rounded.KeyboardArrowDown else Icons.Rounded.KeyboardArrowUp,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+
+        if (onOpenRecordingScreen != null) {
+            IconButton(
+                onClick = onOpenRecordingScreen,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .minimumInteractiveComponentSize()
+                    .testTag("open_recording_screen_button")
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.OpenInFull,
+                    contentDescription = stringResource(R.string.shortcut_record_long),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
     }
 }
 

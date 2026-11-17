@@ -84,7 +84,6 @@ import androidx.compose.material.icons.rounded.Tag
 import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material.icons.rounded.TravelExplore
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -174,6 +173,7 @@ fun JournalScreen(
     onConsumeExternalCommand: () -> Unit,
     onNoteClick: (String) -> Unit,
     onReviewNoteClick: (String) -> Unit = onNoteClick,
+    onOpenRecordingScreen: () -> Unit = {},
     onSignOutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -213,7 +213,6 @@ fun JournalScreen(
     val paywallFeature by viewModel.paywallFeature.collectAsStateWithLifecycle()
 
     var showTypeMemoSheet by remember { mutableStateOf(false) }
-    var initialTypedMemo by remember { mutableStateOf("") }
     var showMicRationaleDialog by remember { mutableStateOf(false) }
     var notePendingDelete by remember { mutableStateOf<VoiceNote?>(null) }
     var noteEditingTags by remember { mutableStateOf<VoiceNote?>(null) }
@@ -359,11 +358,11 @@ fun JournalScreen(
                     onSaveDraft = viewModel::stopAndSaveForLater,
                     onCancelRecording = viewModel::cancelRecording,
                     onOpenTypeMemo = {
-                        initialTypedMemo = ""
                         showTypeMemoSheet = true
                     },
                     onImportAudio = { audioImportLauncher.launch(arrayOf("audio/*")) },
-                    onToggleAutoFactCheck = viewModel::setAutoFactCheck
+                    onToggleAutoFactCheck = viewModel::setAutoFactCheck,
+                    onOpenRecordingScreen = onOpenRecordingScreen
                 )
             }
         }
@@ -513,11 +512,6 @@ fun JournalScreen(
                             },
                             onRecordClick = handleStartRecordClick,
                             onTypeMemoClick = {
-                                initialTypedMemo = ""
-                                showTypeMemoSheet = true
-                            },
-                            onTrySamplePrompt = { sample ->
-                                initialTypedMemo = sample
                                 showTypeMemoSheet = true
                             }
                         )
@@ -622,7 +616,6 @@ fun JournalScreen(
 
     if (showTypeMemoSheet) {
         TypeMemoBottomSheet(
-            initialText = initialTypedMemo,
             autoFactCheck = captureState.autoFactCheck,
             onToggleAutoFactCheck = viewModel::setAutoFactCheck,
             onDismiss = { showTypeMemoSheet = false },
@@ -809,7 +802,6 @@ fun JournalScreen(
             dismissButton = {
                 TextButton(onClick = {
                     showMicRationaleDialog = false
-                    initialTypedMemo = ""
                     showTypeMemoSheet = true
                 }) {
                     Text(stringResource(R.string.action_type_memo))
@@ -1585,18 +1577,13 @@ private fun VoiceNoteCard(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun EmptyJournalState(
     hasActiveFilter: Boolean,
     onResetFilter: () -> Unit,
     onRecordClick: () -> Unit,
-    onTypeMemoClick: () -> Unit,
-    onTrySamplePrompt: (String) -> Unit
+    onTypeMemoClick: () -> Unit
 ) {
-    val evPromptText = stringResource(R.string.sample_prompt_ev_text)
-    val bioPromptText = stringResource(R.string.sample_prompt_bio_text)
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1686,54 +1673,21 @@ private fun EmptyJournalState(
                         Text(stringResource(R.string.action_type_memo))
                     }
                 }
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    AssistChip(
-                        onClick = { onTrySamplePrompt(evPromptText) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.AutoAwesome,
-                                contentDescription = null,
-                                modifier = Modifier.size(15.dp)
-                            )
-                        },
-                        label = { Text(stringResource(R.string.sample_prompt_ev_chip), style = MaterialTheme.typography.labelSmall) }
-                    )
-                    AssistChip(
-                        onClick = { onTrySamplePrompt(bioPromptText) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.AutoAwesome,
-                                contentDescription = null,
-                                modifier = Modifier.size(15.dp)
-                            )
-                        },
-                        label = { Text(stringResource(R.string.sample_prompt_bio_chip), style = MaterialTheme.typography.labelSmall) }
-                    )
-                }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TypeMemoBottomSheet(
-    initialText: String,
     autoFactCheck: Boolean,
     onToggleAutoFactCheck: (Boolean) -> Unit,
     onDismiss: () -> Unit,
     onSubmit: (String) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var memoText by remember(initialText) { mutableStateOf(initialText) }
-
-    val quickTemplates = listOf(
-        stringResource(R.string.template_ev_label) to stringResource(R.string.template_ev_prompt),
-        stringResource(R.string.template_meeting_label) to stringResource(R.string.template_meeting_prompt)
-    )
+    var memoText by remember { mutableStateOf("") }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -1758,25 +1712,6 @@ private fun TypeMemoBottomSheet(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                quickTemplates.forEach { (label, prompt) ->
-                    AssistChip(
-                        onClick = { memoText = prompt },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.AutoAwesome,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        },
-                        label = { Text(label, style = MaterialTheme.typography.labelSmall) }
-                    )
-                }
-            }
 
             OutlinedTextField(
                 value = memoText,

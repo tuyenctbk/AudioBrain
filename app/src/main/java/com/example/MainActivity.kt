@@ -12,6 +12,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -49,6 +50,7 @@ import com.example.ui.detail.NoteDetailViewModel
 import com.example.ui.journal.JournalScreen
 import com.example.ui.journal.JournalViewModel
 import com.example.ui.onboarding.OnboardingScreen
+import com.example.ui.recording.RecordingScreenRoute
 import com.example.ui.review.TranscriptReviewScreen
 import com.example.ui.review.TranscriptReviewViewModel
 import com.example.ui.theme.AudioBrainTheme
@@ -57,13 +59,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 
 const val ROUTE_JOURNAL = "journal"
+const val ROUTE_RECORDING = "recording"
 const val ROUTE_NOTE_DETAIL = "note/{noteId}"
 const val ROUTE_TRANSCRIPT_REVIEW = "note/{noteId}/review"
 const val ACTION_QUICK_RECORD = "com.aistudio.audiobrain.ACTION_QUICK_RECORD"
@@ -128,12 +128,50 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private fun FirebaseAuth.authStateFlow(): Flow<FirebaseUser?> = callbackFlow {
-    val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-        trySend(firebaseAuth.currentUser)
-    }
-    addAuthStateListener(listener)
-    awaitClose { removeAuthStateListener(listener) }
+internal sealed interface RootDestination {
+    data object Onboarding : RootDestination
+    data object Auth : RootDestination
+    data class Authenticated(
+        val uid: String,
+        val displayName: String?,
+        val email: String?,
+        val isGuest: Boolean
+    ) : RootDestination
+}
+
+internal fun resolveRootDestination(
+    hasCompletedOnboarding: Boolean,
+    currentUser: FirebaseUser?,
+    isGuestMode: Boolean
+): RootDestination = resolveRootDestination(
+    hasCompletedOnboarding = hasCompletedOnboarding,
+    userId = currentUser?.uid,
+    displayName = currentUser?.displayName,
+    email = currentUser?.email,
+    isGuestMode = isGuestMode
+)
+
+internal fun resolveRootDestination(
+    hasCompletedOnboarding: Boolean,
+    userId: String?,
+    displayName: String?,
+    email: String?,
+    isGuestMode: Boolean
+): RootDestination = when {
+    !hasCompletedOnboarding -> RootDestination.Onboarding
+    !userId.isNullOrBlank() -> RootDestination.Authenticated(
+        uid = userId,
+        displayName = displayName,
+        email = email,
+        isGuest = false
+    )
+    isGuestMode -> RootDestination.Authenticated(
+        uid = VoiceNotesRepository.GUEST_USER_ID,
+        displayName = null,
+        email = null,
+        isGuest = true
+    )
+    else -> RootDestination.Auth
 }
 
 @Composable
@@ -145,31 +183,42 @@ private fun AudioBrainRoot(
     val context = LocalContext.current
     val quotaManager = remember(context) { UsageQuotaManager.getInstance(context) }
     val hasCompletedOnboarding by quotaManager.hasCompletedOnboarding.collectAsStateWithLifecycle()
-    val currentUser by auth.authStateFlow().collectAsStateWithLifecycle(initialValue = auth.currentUser)
-    var manualSignedInUser by remember { mutableStateOf(auth.currentUser) }
+    var currentUser by remember(auth) { mutableStateOf(auth.currentUser) }
     var isGuestMode by remember { mutableStateOf(false) }
 
-    LaunchedEffect(currentUser) {
-        manualSignedInUser = currentUser
-        if (currentUser != null) {
-            isGuestMode = false
+    DisposableEffect(auth) {
+        val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            val updatedUser = firebaseAuth.currentUser
+            currentUser = updatedUser
+            if (updatedUser != null) {
+                isGuestMode = false
+            }
         }
+        auth.addAuthStateListener(listener)
+        onDispose { auth.removeAuthStateListener(listener) }
     }
 
-    val activeFirebaseUser = currentUser ?: manualSignedInUser
-    val effectiveUid = activeFirebaseUser?.uid ?: if (isGuestMode) VoiceNotesRepository.GUEST_USER_ID else null
+    val rootDestination = resolveRootDestination(
+        hasCompletedOnboarding = hasCompletedOnboarding,
+        currentUser = currentUser,
+        isGuestMode = isGuestMode
+    )
 
-    LaunchedEffect(effectiveUid, activeFirebaseUser) {
-        quotaManager.setAuthContext(
-            userId = effectiveUid,
-            isGuest = activeFirebaseUser == null
-        )
-    }
-
-    val rootDestination = when {
-        !hasCompletedOnboarding -> "onboarding"
-        effectiveUid == null -> "auth"
-        else -> "app:$effectiveUid"
+    LaunchedEffect(rootDestination) {
+        when (rootDestination) {
+            is RootDestination.Authenticated -> {
+                quotaManager.setAuthContext(
+                    userId = rootDestination.uid,
+                    isGuest = rootDestination.isGuest
+                )
+            }
+            RootDestination.Onboarding, RootDestination.Auth -> {
+                quotaManager.setAuthContext(
+                    userId = null,
+                    isGuest = false
+                )
+            }
+        }
     }
 
     Crossfade(
@@ -177,40 +226,37 @@ private fun AudioBrainRoot(
         animationSpec = tween(durationMillis = 280),
         label = "root_gate_crossfade"
     ) { destination ->
-        val user = activeFirebaseUser
-        when {
-            destination == "onboarding" -> {
+        when (destination) {
+            RootDestination.Onboarding -> {
                 OnboardingScreen(
                     onFinishOnboarding = { quotaManager.completeOnboarding() }
                 )
             }
-            destination == "auth" || effectiveUid == null -> {
+            RootDestination.Auth -> {
                 AuthScreen(
-                    onAuthSuccess = {
-                        val fbUser = auth.currentUser
-                        manualSignedInUser = fbUser
-                        if (fbUser == null) {
-                            isGuestMode = true
-                        } else {
-                            isGuestMode = false
-                        }
+                    onAuthSuccess = { signedInUser ->
+                        currentUser = signedInUser
+                        isGuestMode = false
                     },
                     onContinueAsGuest = {
                         isGuestMode = true
                     }
                 )
             }
-            else -> {
-                key(effectiveUid) {
+            is RootDestination.Authenticated -> {
+                val resolvedDisplayName = destination.displayName?.takeIf { it.isNotBlank() }
+                    ?: stringResource(R.string.auth_guest_display_name)
+                val resolvedEmail = destination.email?.takeIf { it.isNotBlank() }
+                key(destination.uid) {
                     AuthenticatedAudioBrainNav(
-                        currentUserId = effectiveUid,
-                        userDisplayName = user?.displayName ?: stringResource(R.string.auth_guest_display_name),
-                        userEmail = user?.email ?: "guest@audiobrain.ai",
+                        currentUserId = destination.uid,
+                        userDisplayName = resolvedDisplayName,
+                        userEmail = resolvedEmail,
                         externalCommand = externalCommand,
                         onConsumeExternalCommand = onConsumeExternalCommand,
                         onSignedOut = {
                             isGuestMode = false
-                            manualSignedInUser = null
+                            currentUser = auth.currentUser
                         }
                     )
                 }
@@ -307,6 +353,11 @@ private fun AuthenticatedAudioBrainNav(
                         launchSingleTop = true
                     }
                 },
+                onOpenRecordingScreen = {
+                    navController.navigate(ROUTE_RECORDING) {
+                        launchSingleTop = true
+                    }
+                },
                 onSignOutClick = {
                     journalViewModel.stopActiveRecordingForSignOut()
                     signOutUser(
@@ -315,6 +366,46 @@ private fun AuthenticatedAudioBrainNav(
                         onSignOutComplete = onSignedOut
                     )
                 }
+            )
+        }
+
+        composable(ROUTE_RECORDING) { backStackEntry ->
+            val journalEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(ROUTE_JOURNAL)
+            }
+            val journalViewModel: JournalViewModel = viewModel(
+                viewModelStoreOwner = journalEntry,
+                key = "journal_$currentUserId",
+                factory = viewModelFactory {
+                    initializer {
+                        val app = checkNotNull(this[APPLICATION_KEY]) {
+                            "APPLICATION_KEY missing from CreationExtras"
+                        }
+                        val databaseId = app.getString(R.string.firestore_database_id)
+                        val db = FirebaseFirestore.getInstance(databaseId)
+                        JournalViewModel(
+                            appContext = app,
+                            repository = VoiceNotesRepository(db, appContext = app.applicationContext),
+                            aiService = AudioBrainAiService(app),
+                            recorderManager = VoiceRecorderManager.shared(app),
+                            pendingStore = PendingMemoStore.getInstance(app),
+                            localAudioStore = LocalAudioStore(app),
+                            networkObserver = NetworkConnectivityObserver(app),
+                            currentUserId = currentUserId
+                        )
+                    }
+                }
+            )
+
+            RecordingScreenRoute(
+                viewModel = journalViewModel,
+                onNoteCreated = { noteId ->
+                    navController.navigate("note/$noteId") {
+                        popUpTo(ROUTE_JOURNAL)
+                        launchSingleTop = true
+                    }
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 

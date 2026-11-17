@@ -173,7 +173,7 @@ class VoiceNotesRepository(
     }
 
     fun observeMessages(userId: String, noteId: String): Flow<List<ChatMessage>> = flow {
-        if (userId == GUEST_USER_ID || auth.currentUser == null) {
+        if (userId == GUEST_USER_ID) {
             val flow = guestMessagesMap.getOrPut(noteId) { MutableStateFlow(emptyList()) }
             emitAll(flow)
             return@flow
@@ -668,7 +668,7 @@ class VoiceNotesRepository(
     }
 
     fun observeUserPreferences(userId: String): Flow<UserPreferences> = flow {
-        if (userId == GUEST_USER_ID || auth.currentUser == null) {
+        if (userId == GUEST_USER_ID) {
             emitAll(guestPreferencesFlow)
             return@flow
         }
@@ -793,7 +793,7 @@ class VoiceNotesRepository(
     }
 
     fun observeFactCheckHistory(userId: String): Flow<List<FactCheckSearchItem>> = flow {
-        if (userId == GUEST_USER_ID || auth.currentUser == null) {
+        if (userId == GUEST_USER_ID) {
             emitAll(guestFactCheckHistoryFlow)
             return@flow
         }

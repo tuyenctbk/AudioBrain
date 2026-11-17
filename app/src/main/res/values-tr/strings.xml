@@ -65,19 +65,11 @@
     <string name="verdict_disputed">Tartışmalı</string>
     <string name="verdict_needs_check">Kontrol Gerekli</string>
 
-    <string name="sample_prompt_ev_chip">Dene: EV vergi teşviki doğrulama</string>
-    <string name="sample_prompt_ev_text">2026 yılı için en güncel elektrikli araç vergi kredisi kurallarını kontrol et ve Cuma günü mali müşavirime e-posta atmayı hatırlat.</string>
-    <string name="sample_prompt_bio_chip">Dene: Biyoloji ders notları</string>
-    <string name="sample_prompt_bio_text">Hızlı ders notu: Fotosentezin ışık tepkimeleri tilakoit zarlarda gerçekleşir; Salı günkü sınavdan önce 6. bölümü tekrar et.</string>
 
     <string name="type_memo_title">Yeni Metin Notu</string>
     <string name="type_memo_subtitle">Bir düşünce, ders özeti veya doğrulanacak iddia yazın. Gemini görevleri yapılandırır ve Google Arama ile gerçekleri kontrol eder.</string>
     <string name="type_memo_placeholder">Örn. Yarın saat 10:00\'da tasarım ekibiyle toplantı. Ayrıca güncel elektrikli araç teşvik kurallarını kontrol et.</string>
     <string name="type_memo_submit">Analiz Et ve Kaydet</string>
-    <string name="template_ev_label">EV Vergi Teşvikleri</string>
-    <string name="template_ev_prompt">2026 için en güncel elektrikli araç vergi teşviki kurallarını kontrol et ve kiralama ile satın alma seçeneklerini karşılaştırmayı hatırlat.</string>
-    <string name="template_meeting_label">Toplantı Özeti</string>
-    <string name="template_meeting_prompt">Ürün eşitlemesi: Android betayı Cuma gününe kadar yayınla, Maya başlangıç metinlerini üstlensin ve Play Store fotoğraf seçici kurallarını tekrar kontrol et.</string>
 
     <string name="delete_note_title">Sesli not silinsin mi?</string>
     <string name="delete_note_journal_body">“%1$s” ve yapay zekâ sohbet geçmişi bulut günlüğünüzden kalıcı olarak silinecek.</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">DOĞRULUK KONTROLÜ</string>
     <string name="export_sources_heading">Kaynaklar:</string>
     <string name="export_section_transcript">DÖKÜM</string>
+    <string name="export_md_actions">Eylem Öğeleri</string>
+    <string name="export_md_factcheck">Doğruluk Kontrolü</string>
+    <string name="export_md_sources">Kaynaklar</string>
 
     <!-- Onboarding, Quota, Paywall & Guest -->
     <string name="auth_continue_guest">Misafir olarak devam et (Anında Erişim)</string>

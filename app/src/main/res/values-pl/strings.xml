@@ -65,19 +65,11 @@
     <string name="verdict_disputed">Kwestionowane</string>
     <string name="verdict_needs_check">Do sprawdzenia</string>
 
-    <string name="sample_prompt_ev_chip">Wypróbuj: weryfikacja ulg EV</string>
-    <string name="sample_prompt_ev_text">Sprawdź najnowsze federalne zasady ulg podatkowych na auta elektryczne na 2026 r. i przypomnij o e-mailu do księgowego w piątek.</string>
-    <string name="sample_prompt_bio_chip">Wypróbuj: notatki z biologii</string>
-    <string name="sample_prompt_bio_text">Szybka notatka z wykładu: faza jasna fotosyntezy zachodzi w błonach tylakoidów; powtórzyć rozdział 6 przed wtorkową kartkówką.</string>
 
     <string name="type_memo_title">Nowa notatka tekstowa</string>
     <string name="type_memo_subtitle">Zapisz myśl, fragment wykładu lub twierdzenie do sprawdzenia. Gemini ułoży zadania i zweryfikuje fakty przez Wyszukiwarkę Google.</string>
     <string name="type_memo_placeholder">np. Spotkanie z zespołem projektowym jutro o 10:00. Sprawdź też najnowsze zasady ulg na auta elektryczne.</string>
     <string name="type_memo_submit">Analizuj i zapisz</string>
-    <string name="template_ev_label">Ulgi EV</string>
-    <string name="template_ev_prompt">Sprawdź najnowsze zasady ulg podatkowych na pojazdy elektryczne na 2026 r. i przypomnij o porównaniu leasingu i zakupu.</string>
-    <string name="template_meeting_label">Podsumowanie spotkania</string>
-    <string name="template_meeting_prompt">Sync produktowy: wypuścić betę Androida do piątku, Maja odpowiada za teksty wdrożeniowe, sprawdzić zasady selektora zdjęć w Play Store.</string>
 
     <string name="delete_note_title">Usunąć notatkę głosową?</string>
     <string name="delete_note_journal_body">„%1$s” oraz historia czatu AI zostaną trwale usunięte z Twojego dziennika w chmurze.</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">WERYFIKACJA FAKTÓW</string>
     <string name="export_sources_heading">Źródła:</string>
     <string name="export_section_transcript">TRANSKRYPCJA</string>
+    <string name="export_md_actions">Zadania do wykonania</string>
+    <string name="export_md_factcheck">Weryfikacja faktów</string>
+    <string name="export_md_sources">Źródła</string>
 
     <!-- Onboarding, Quota, Paywall & Guest -->
     <string name="auth_continue_guest">Kontynuuj jako gość (Natychmiastowy dostęp)</string>

@@ -41,7 +41,6 @@ class AudioPlayerManager(
     fun loadFile(file: File?, autoPlay: Boolean = false) {
         if (file == null || !file.exists() || file.length() == 0L) {
             release()
-            _state.value = AudioPlaybackState(hasAudio = false)
             return
         }
         if (loadedPath == file.absolutePath && mediaPlayer != null) {
@@ -53,7 +52,11 @@ class AudioPlayerManager(
 
         release()
         loadedPath = file.absolutePath
-        _state.value = AudioPlaybackState(hasAudio = true, isPrepared = false)
+        _state.value = AudioPlaybackState(
+            hasAudio = true,
+            isPrepared = false,
+            playbackSpeed = _state.value.playbackSpeed
+        )
 
         try {
             val player = MediaPlayer().apply {
@@ -102,6 +105,7 @@ class AudioPlayerManager(
             _state.value = AudioPlaybackState(
                 hasAudio = true,
                 isPrepared = false,
+                playbackSpeed = _state.value.playbackSpeed,
                 errorMessage = e.localizedMessage ?: appContext?.getString(R.string.err_audio_load) ?: "Unable to load audio."
             )
         }
@@ -192,6 +196,7 @@ class AudioPlayerManager(
             }
         }
         mediaPlayer = null
+        _state.value = AudioPlaybackState(playbackSpeed = _state.value.playbackSpeed)
     }
 
     companion object {

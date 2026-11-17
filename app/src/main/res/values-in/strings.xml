@@ -65,19 +65,11 @@
     <string name="verdict_disputed">Dibantah</string>
     <string name="verdict_needs_check">Perlu Cek</string>
 
-    <string name="sample_prompt_ev_chip">Coba: cek fakta insentif EV</string>
-    <string name="sample_prompt_ev_text">Cek aturan insentif pajak mobil listrik federal terbaru tahun 2026 dan ingatkan saya untuk mengirim email ke akuntan pajak hari Jumat.</string>
-    <string name="sample_prompt_bio_chip">Coba: catatan kuliah biologi</string>
-    <string name="sample_prompt_bio_text">Catatan singkat kuliah: reaksi terang fotosintesis terjadi di membran tilakoid; ulas bab 6 sebelum kuis hari Selasa.</string>
 
     <string name="type_memo_title">Memo Teks Baru</string>
     <string name="type_memo_subtitle">Catat ide, cuplikan kuliah, atau klaim untuk dicek. Gemini menyusun tugas dan memverifikasi fakta lewat Google Search.</string>
     <string name="type_memo_placeholder">mis., Rapat dengan tim desain besok pukul 10.00. Juga cek aturan insentif pajak EV terbaru.</string>
     <string name="type_memo_submit">Analisis &amp; Simpan</string>
-    <string name="template_ev_label">Insentif Pajak EV</string>
-    <string name="template_ev_prompt">Cek aturan terbaru kredit pajak mobil listrik untuk 2026 dan ingatkan saya membandingkan opsi sewa vs beli.</string>
-    <string name="template_meeting_label">Ringkasan Rapat</string>
-    <string name="template_meeting_prompt">Sinkronisasi produk: rilis beta Android paling lambat Jumat, Maya menangani teks onboarding, dan cek ulang aturan pemilih foto Play Store.</string>
 
     <string name="delete_note_title">Hapus catatan suara?</string>
     <string name="delete_note_journal_body">“%1$s” dan riwayat obrolan AI-nya akan dihapus permanen dari jurnal cloud Anda.</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">VERIFIKASI FAKTA</string>
     <string name="export_sources_heading">Sumber:</string>
     <string name="export_section_transcript">TRANSKRIP</string>
+    <string name="export_md_actions">Item Tindakan</string>
+    <string name="export_md_factcheck">Verifikasi Fakta</string>
+    <string name="export_md_sources">Sumber</string>
     <string name="auth_continue_guest">Lanjutkan sebagai Tamu (Akses Instan)</string>
     <string name="auth_guest_display_name">Penjelajah Tamu</string>
     <string name="onboarding_skip">Lewati</string>
@@ -530,7 +525,7 @@
     <string name="paywall_cta_bonus_credits">+3 Kredit Gratis</string>
     <string name="paywall_cta_save_draft">Simpan Draf Audio</string>
     <string name="paywall_cta_maybe_later">Nanti Saja</string>
-    <string name="settings_upgrade_cta">Upgrade</string>
+    <string name="settings_upgrade_cta">Tingkatkan</string>
     <string name="settings_quota_memos">Memo AI</string>
     <string name="settings_quota_factchecks">Cek Fakta Langsung</string>
     <string name="settings_quota_digests">Intisari Catatan</string>

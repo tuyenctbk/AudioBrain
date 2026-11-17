@@ -65,19 +65,11 @@
     <string name="verdict_disputed">متنازع عليه</string>
     <string name="verdict_needs_check">بحاجة لمراجعة</string>
 
-    <string name="sample_prompt_ev_chip">جرّب: تدقيق حوافز السيارات الكهربائية</string>
-    <string name="sample_prompt_ev_text">تحقق من أحدث قواعد الإعفاء الضريبي للسيارات الكهربائية لعام 2026 وذكّرني بمراسلة المحاسب يوم الجمعة.</string>
-    <string name="sample_prompt_bio_chip">جرّب: ملاحظات محاضرة أحياء</string>
-    <string name="sample_prompt_bio_text">ملاحظة سريعة: تحدث التفاعلات الضوئية في البناء الضوئي داخل أغشية الثايلاكويد؛ مراجعة الفصل السادس قبل اختبار الثلاثاء.</string>
 
     <string name="type_memo_title">مذكرة نصية جديدة</string>
     <string name="type_memo_subtitle">اكتب فكرة أو مقتطف محاضرة أو معلومة للتحقق منها. سينظم Gemini المهام ويتحقق من الحقائق عبر بحث Google.</string>
     <string name="type_memo_placeholder">مثال: اجتماع فريق التصميم غداً الساعة 10 صباحاً. وتحقق أيضاً من أحدث قواعد حوافز السيارات الكهربائية.</string>
     <string name="type_memo_submit">تحليل وحفظ</string>
-    <string name="template_ev_label">حوافز السيارات الكهربائية</string>
-    <string name="template_ev_prompt">تحقق من أحدث قواعد الحوافز الضريبية للسيارات الكهربائية لعام 2026 وذكّرني بمقارنة خيارات الاستئجار والشراء.</string>
-    <string name="template_meeting_label">ملخص اجتماع</string>
-    <string name="template_meeting_prompt">مزامنة المنتج: إطلاق نسخة Android التجريبية يوم الجمعة، ومايا تتولى نصوص الترحيب، ومراجعة سياسة منتقي الصور في Play Store.</string>
 
     <string name="delete_note_title">حذف الملاحظة الصوتية؟</string>
     <string name="delete_note_journal_body">سيتم حذف “%1$s” وسجل محادثات الذكاء الاصطناعي نهائياً من مفكرتك السحابية.</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">التحقق من الحقائق</string>
     <string name="export_sources_heading">المصادر:</string>
     <string name="export_section_transcript">النص المفرّغ</string>
+    <string name="export_md_actions">عناصر الإجراءات</string>
+    <string name="export_md_factcheck">التحقق من الحقائق</string>
+    <string name="export_md_sources">المصادر</string>
     <string name="auth_continue_guest">المتابعة كضيف (وصول فوري)</string>
     <string name="auth_guest_display_name">مستكشف ضيف</string>
     <string name="onboarding_skip">تخطي</string>

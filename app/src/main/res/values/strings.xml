@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AudioBrain</string>
-    <string name="default_web_client_id" translatable="false"></string>
     <string name="auth_tagline">VOICE JOURNAL • LIVE FACT-CHECK</string>
     <string name="auth_headline">Think out loud.\nWe’ll structure and verify it.</string>
     <string name="auth_subheadline">Record rambling voice memos, lectures, or meetings. Gemini transcribes, extracts action items, and cross-references claims against live Google Search.</string>
@@ -67,19 +66,10 @@
     <string name="verdict_disputed">Disputed</string>
     <string name="verdict_needs_check">Needs Check</string>
 
-    <string name="sample_prompt_ev_chip">Try: EV tax credit fact-check</string>
-    <string name="sample_prompt_ev_text">Check what the latest federal EV tax credit rules are for 2026 and remind me to email my tax CPA Friday.</string>
-    <string name="sample_prompt_bio_chip">Try: Biology lecture notes</string>
-    <string name="sample_prompt_bio_text">Quick lecture note: Photosynthesis light reactions occur in thylakoid membranes; review chapter 6 before Tuesday\'s quiz.</string>
-
     <string name="type_memo_title">New Voice-Style Memo</string>
     <string name="type_memo_subtitle">Jot down a thought, lecture snippet, or claim to check. Gemini will structure tasks and verify facts via Google Search.</string>
     <string name="type_memo_placeholder">e.g., Meeting with design team tomorrow at 10am. Also check what the latest rules on EV tax credits are.</string>
     <string name="type_memo_submit">Analyze &amp; Save</string>
-    <string name="template_ev_label">EV Tax Credits</string>
-    <string name="template_ev_prompt">Check what the latest rules on EV tax credits are for 2026 and remind me to compare lease vs buy options.</string>
-    <string name="template_meeting_label">Meeting Recap</string>
-    <string name="template_meeting_prompt">Product sync: Ship Android beta by Friday, Maya owns onboarding copy, and double-check Play Store photo picker rules.</string>
 
     <string name="delete_note_title">Delete voice note?</string>
     <string name="delete_note_journal_body">“%1$s” and its AI chat history will be permanently removed from your cloud journal.</string>
@@ -486,6 +476,9 @@
     <string name="export_section_factcheck">FACT-CHECK VERIFICATION</string>
     <string name="export_sources_heading">Sources:</string>
     <string name="export_section_transcript">TRANSCRIPT</string>
+    <string name="export_md_actions">Action Items</string>
+    <string name="export_md_factcheck">Fact-Check Verification</string>
+    <string name="export_md_sources">Sources</string>
 
     <!-- Onboarding -->
     <string name="onboarding_skip">Skip</string>

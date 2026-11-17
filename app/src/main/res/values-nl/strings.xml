@@ -65,19 +65,11 @@
     <string name="verdict_disputed">Betwist</string>
     <string name="verdict_needs_check">Controle nodig</string>
 
-    <string name="sample_prompt_ev_chip">Probeer: EV-belastingvoordeel check</string>
-    <string name="sample_prompt_ev_text">Controleer wat de nieuwste federale EV-belastingregels voor 2026 zijn en herinner me eraan vrijdag mijn accountant te mailen.</string>
-    <string name="sample_prompt_bio_chip">Probeer: Biologienotities</string>
-    <string name="sample_prompt_bio_text">Korte collegenotitie: lichtreacties van fotosynthese vinden plaats in thylakoïdemembranen; herhaal hoofdstuk 6 voor de toets van dinsdag.</string>
 
     <string name="type_memo_title">Nieuwe tekstmemo</string>
     <string name="type_memo_subtitle">Noteer een gedachte, collegefragment of bewering om te checken. Gemini structureert taken en verifieert feiten via Google Zoeken.</string>
     <string name="type_memo_placeholder">bijv. Vergadering met ontwerpteam morgen om 10:00. Check ook de nieuwste regels voor EV-subsidies.</string>
     <string name="type_memo_submit">Analyseren &amp; Opslaan</string>
-    <string name="template_ev_label">EV-belastingregels</string>
-    <string name="template_ev_prompt">Controleer de nieuwste EV-belastingregels voor 2026 en herinner me eraan lease en koop te vergelijken.</string>
-    <string name="template_meeting_label">Vergadersamenvatting</string>
-    <string name="template_meeting_prompt">Productsync: Android-bèta vrijdag uitbrengen, Maya verzorgt onboardingteksten en controleer het Play Store-fotokiezerbeleid opnieuw.</string>
 
     <string name="delete_note_title">Spraaknotitie verwijderen?</string>
     <string name="delete_note_journal_body">“%1$s” en de bijbehorende AI-chatgeschiedenis worden permanent verwijderd uit je clouddagboek.</string>
@@ -420,7 +412,7 @@
     <string name="review_done_editing_segment">Klaar</string>
     <string name="review_journal_details_title">Gegevens van dagboekinvoer</string>
     <string name="review_category_label">Categorie</string>
-    <string name="review_tags_label">Tags</string>
+    <string name="review_tags_label">Labels</string>
     <string name="review_add_action_item_hint">Actiepunt toevoegen…</string>
     <string name="review_action_item_hint">Actiepunt</string>
     <string name="cd_add_action_item">Actiepunt toevoegen</string>
@@ -477,13 +469,16 @@
     <string name="export_category_prefix">Categorie: %1$s</string>
     <string name="export_duration_prefix">Duur: %1$s</string>
     <string name="export_updated_prefix">Bijgewerkt: %1$s</string>
-    <string name="export_tags_prefix">Tags: %1$s</string>
+    <string name="export_tags_prefix">Labels: %1$s</string>
     <string name="export_section_summary">SAMENVATTING</string>
     <string name="export_section_decisions">BELANGRIJKE BESLISSINGEN</string>
     <string name="export_section_actions">ACTIEPUNTEN</string>
     <string name="export_section_factcheck">FEITENCONTROLE</string>
     <string name="export_sources_heading">Bronnen:</string>
-    <string name="export_section_transcript">TRANSCRIPT</string>
+    <string name="export_section_transcript">TRANSCRIPTIE</string>
+    <string name="export_md_actions">Actiepunten</string>
+    <string name="export_md_factcheck">Feitencontrole</string>
+    <string name="export_md_sources">Bronnen</string>
     <string name="auth_continue_guest">Doorgaan als gast (Directe toegang)</string>
     <string name="auth_guest_display_name">Gastverkenner</string>
     <string name="onboarding_skip">Overslaan</string>

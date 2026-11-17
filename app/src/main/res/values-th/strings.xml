@@ -65,19 +65,11 @@
     <string name="verdict_disputed">มีข้อโต้แย้ง</string>
     <string name="verdict_needs_check">รอตรวจสอบ</string>
 
-    <string name="sample_prompt_ev_chip">ลอง: ตรวจสอบเครดิตภาษีรถ EV</string>
-    <string name="sample_prompt_ev_text">ตรวจสอบกฎเครดิตภาษีรถ EV ล่าสุดของรัฐบาลกลางปี 2026 และเตือนให้ส่งอีเมลหานักบัญชีวันศุกร์</string>
-    <string name="sample_prompt_bio_chip">ลอง: บันทึกวิชาชีววิทยา</string>
-    <string name="sample_prompt_bio_text">บันทึกการบรรยายสั้น: ปฏิกิริยาแสงในการสังเคราะห์แสงเกิดในเยื่อไทลาคอยด์ ทบทวนบทที่ 6 ก่อนสอบย่อยวันอังคาร</string>
 
     <string name="type_memo_title">บันทึกแบบข้อความใหม่</string>
     <string name="type_memo_subtitle">จดความคิด ข้อความจากการบรรยาย หรือเรื่องที่ต้องการตรวจสอบ Gemini จะจัดโครงสร้างงานและตรวจสอบผ่าน Google Search</string>
     <string name="type_memo_placeholder">เช่น ประชุมทีมออกแบบพรุ่งนี้ 10 โมง และตรวจสอบกฎล่าสุดเรื่องเครดิตภาษีรถ EV</string>
     <string name="type_memo_submit">วิเคราะห์และบันทึก</string>
-    <string name="template_ev_label">เครดิตภาษี EV</string>
-    <string name="template_ev_prompt">ตรวจสอบกฎเครดิตภาษีรถ EV ล่าสุดสำหรับปี 2026 และเตือนให้เปรียบเทียบตัวเลือกเช่ากับซื้อ</string>
-    <string name="template_meeting_label">สรุปการประชุม</string>
-    <string name="template_meeting_prompt">ซิงค์ผลิตภัณฑ์: ส่ง Android เบต้าภายในวันศุกร์ มายาดูแลข้อความต้อนรับ และตรวจสอบกฎตัวเลือกรูปภาพ Play Store อีกครั้ง</string>
 
     <string name="delete_note_title">ลบบันทึกเสียงหรือไม่?</string>
     <string name="delete_note_journal_body">“%1$s” และประวัติแชท AI จะถูกลบออกจากบันทึกบนคลาวด์ของคุณอย่างถาวร</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">การตรวจข้อเท็จจริง</string>
     <string name="export_sources_heading">แหล่งที่มา:</string>
     <string name="export_section_transcript">ข้อความถอดความ</string>
+    <string name="export_md_actions">รายการดำเนินการ</string>
+    <string name="export_md_factcheck">การตรวจข้อเท็จจริง</string>
+    <string name="export_md_sources">แหล่งที่มา</string>
 
     <!-- Onboarding, Quota, Paywall & Guest -->
     <string name="auth_continue_guest">ดำเนินการต่อในฐานะผู้เยี่ยมชม (เข้าถึงทันที)</string>

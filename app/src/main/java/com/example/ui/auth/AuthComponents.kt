@@ -2,6 +2,8 @@ package com.example.ui.auth
 
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
+import android.content.MutableContextWrapper
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -53,6 +55,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,45 +71,62 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import com.example.R
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Companion.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 private const val AUTH_TAG = "AudioBrainAuth"
 
 fun Context.findActivity(): Activity? {
     var currentContext: Context? = this
-    while (currentContext is android.content.ContextWrapper) {
+    while (currentContext is ContextWrapper) {
         if (currentContext is Activity) return currentContext
         currentContext = currentContext.baseContext
     }
     return currentContext as? Activity
 }
 
+internal fun extractGoogleIdToken(credential: Credential): String? {
+    return when {
+        credential is GoogleIdTokenCredential -> credential.idToken
+        credential is CustomCredential && credential.type == TYPE_GOOGLE_ID_TOKEN_CREDENTIAL -> {
+            GoogleIdTokenCredential.createFrom(credential.data).idToken
+        }
+        else -> null
+    }
+}
+
 fun attemptAutoSignIn(
     context: Context,
     credentialManager: CredentialManager,
-    onAuthSuccess: () -> Unit,
+    onAuthSuccess: (FirebaseUser) -> Unit,
     onUnauthenticated: () -> Unit,
     scope: CoroutineScope
 ) {
-    if (Firebase.auth.currentUser != null) {
-        onAuthSuccess()
+    Firebase.auth.currentUser?.let { existingUser ->
+        onAuthSuccess(existingUser)
         return
     }
     val clientId = try {
@@ -131,20 +151,38 @@ fun attemptAutoSignIn(
 
     scope.launch {
         try {
-            val activityContext = context.findActivity() ?: context
-            kotlinx.coroutines.withTimeoutOrNull(2500L) {
-                val result = credentialManager.getCredential(activityContext, request)
-                val credential = result.credential
-                if (credential is CustomCredential && credential.type == TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                    val googleIdToken = GoogleIdTokenCredential.createFrom(credential.data).idToken
-                    val authCredential = GoogleAuthProvider.getCredential(googleIdToken, null)
-                    Firebase.auth.signInWithCredential(authCredential).await()
-                    onAuthSuccess()
+            val activityContext = context.findActivity()?.let { MutableContextWrapper(it) } ?: context
+            val result = withTimeoutOrNull(2500L) {
+                credentialManager.getCredential(activityContext, request)
+            }
+            if (result == null) {
+                onUnauthenticated()
+                return@launch
+            }
+            val googleIdToken = extractGoogleIdToken(result.credential)
+            if (!googleIdToken.isNullOrBlank()) {
+                val authCredential = GoogleAuthProvider.getCredential(googleIdToken, null)
+                val authResult = Firebase.auth.signInWithCredential(authCredential).await()
+                val signedInUser = authResult.user ?: Firebase.auth.currentUser
+                if (signedInUser != null) {
+                    onAuthSuccess(signedInUser)
                 } else {
                     onUnauthenticated()
                 }
-            } ?: onUnauthenticated()
-        } catch (_: Exception) {
+            } else {
+                onUnauthenticated()
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: NoCredentialException) {
+            onUnauthenticated()
+        } catch (_: GetCredentialCancellationException) {
+            onUnauthenticated()
+        } catch (e: GetCredentialException) {
+            Log.w(AUTH_TAG, "Silent auto sign-in failed: ${e.message}")
+            onUnauthenticated()
+        } catch (e: Exception) {
+            Log.w(AUTH_TAG, "Silent auto sign-in error: ${e.message}")
             onUnauthenticated()
         }
     }
@@ -153,7 +191,7 @@ fun attemptAutoSignIn(
 fun onGoogleSignInClicked(
     context: Context,
     credentialManager: CredentialManager,
-    onAuthSuccess: () -> Unit,
+    onAuthSuccess: (FirebaseUser) -> Unit,
     onAuthError: (String) -> Unit,
     scope: CoroutineScope,
     onAuthCancelled: () -> Unit = {}
@@ -175,21 +213,39 @@ fun onGoogleSignInClicked(
 
     scope.launch {
         try {
-            val activityContext = context.findActivity()
+            val activity = context.findActivity()
                 ?: throw IllegalStateException(context.getString(R.string.auth_error_requires_activity))
-            val result = credentialManager.getCredential(activityContext, request)
-            val credential = result.credential
-            if (credential is CustomCredential && credential.type == TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                val googleIdToken = GoogleIdTokenCredential.createFrom(credential.data).idToken
+            val result = credentialManager.getCredential(
+                context = MutableContextWrapper(activity),
+                request = request
+            )
+            val googleIdToken = extractGoogleIdToken(result.credential)
+            if (!googleIdToken.isNullOrBlank()) {
                 val authCredential = GoogleAuthProvider.getCredential(googleIdToken, null)
-                Firebase.auth.signInWithCredential(authCredential).await()
-                onAuthSuccess()
+                val authResult = Firebase.auth.signInWithCredential(authCredential).await()
+                val signedInUser = authResult.user ?: Firebase.auth.currentUser
+                if (signedInUser != null) {
+                    onAuthSuccess(signedInUser)
+                } else {
+                    onAuthError(context.getString(R.string.auth_error_sign_in_failed))
+                }
             } else {
                 onAuthError(context.getString(R.string.auth_error_unexpected_credential))
             }
         } catch (e: GetCredentialCancellationException) {
             Log.w(AUTH_TAG, "Google Sign-In flow cancelled or dismissed: ${e.message}", e)
             onAuthCancelled()
+        } catch (e: NoCredentialException) {
+            Log.w(AUTH_TAG, "No Google credentials available on device: ${e.message}", e)
+            onAuthError(e.localizedMessage ?: context.getString(R.string.auth_error_sign_in_failed))
+        } catch (e: GoogleIdTokenParsingException) {
+            Log.e(AUTH_TAG, "Received an invalid Google ID token response", e)
+            onAuthError(context.getString(R.string.auth_error_unexpected_credential))
+        } catch (e: GetCredentialException) {
+            Log.e(AUTH_TAG, "Credential Manager sign-in failed: ${e.type}", e)
+            onAuthError(e.localizedMessage ?: context.getString(R.string.auth_error_sign_in_failed))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e(AUTH_TAG, "Google Sign-In failed", e)
             onAuthError(e.localizedMessage ?: context.getString(R.string.auth_error_sign_in_failed))
@@ -205,11 +261,11 @@ fun signOutUser(
     scope.launch {
         withContext(NonCancellable) {
             try {
+                Firebase.auth.signOut()
                 credentialManager.clearCredentialState(ClearCredentialStateRequest())
             } catch (e: Exception) {
                 Log.w(AUTH_TAG, "Failed to clear credential state: ${e.message}")
             } finally {
-                Firebase.auth.signOut()
                 onSignOutComplete()
             }
         }
@@ -218,13 +274,18 @@ fun signOutUser(
 
 @Composable
 fun AuthScreen(
-    onAuthSuccess: () -> Unit,
-    onContinueAsGuest: () -> Unit = onAuthSuccess,
+    onAuthSuccess: (FirebaseUser) -> Unit,
+    onContinueAsGuest: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
     val scope = rememberCoroutineScope()
-    val credentialManager = remember(context) { CredentialManager.create(context) }
+    val credentialManager = remember(activity, context) {
+        CredentialManager.create(activity ?: context)
+    }
+    val latestOnAuthSuccess by rememberUpdatedState(onAuthSuccess)
+    val latestOnContinueAsGuest by rememberUpdatedState(onContinueAsGuest)
 
     var isLoading by remember { mutableStateOf(false) }
     var isCheckingAutoSignIn by remember { mutableStateOf(true) }
@@ -257,9 +318,9 @@ fun AuthScreen(
         attemptAutoSignIn(
             context = context,
             credentialManager = credentialManager,
-            onAuthSuccess = {
+            onAuthSuccess = { signedInUser ->
                 isCheckingAutoSignIn = false
-                onAuthSuccess()
+                latestOnAuthSuccess(signedInUser)
             },
             onUnauthenticated = {
                 isCheckingAutoSignIn = false
@@ -423,9 +484,9 @@ fun AuthScreen(
                         onGoogleSignInClicked(
                             context = context,
                             credentialManager = credentialManager,
-                            onAuthSuccess = {
+                            onAuthSuccess = { signedInUser ->
                                 isLoading = false
-                                onAuthSuccess()
+                                latestOnAuthSuccess(signedInUser)
                             },
                             onAuthError = { msg ->
                                 isLoading = false
@@ -475,7 +536,7 @@ fun AuthScreen(
                 OutlinedButton(
                     onClick = {
                         errorMessage = null
-                        onContinueAsGuest()
+                        latestOnContinueAsGuest()
                     },
                     enabled = !isLoading,
                     shape = MaterialTheme.shapes.medium,

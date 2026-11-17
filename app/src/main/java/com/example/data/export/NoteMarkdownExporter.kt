@@ -16,27 +16,41 @@ object NoteMarkdownExporter {
     private val markdownItalicRegex = Regex("""(?<!\*)\*([^*\n]+)\*(?!\*)|(?<!_)_([^_\n]+)_(?!_)""")
     private val markdownCodeRegex = Regex("""`([^`]+)`""")
 
-    fun toMarkdown(note: VoiceNote): String = buildString {
-        appendLine("# ${note.title}")
+    fun toMarkdown(note: VoiceNote, context: Context? = null): String = buildString {
+        val fallbackUntitled = context?.getString(R.string.fallback_untitled_voice_note) ?: "Untitled Voice Note"
+        val resolvedTitle = note.title.trim().ifBlank { fallbackUntitled }
+        appendLine("# $resolvedTitle")
+        val formattedTime = formatTimestamp(
+            timestamp = note.updatedAt ?: note.createdAt,
+            fallbackJustNow = context?.getString(R.string.timestamp_just_now) ?: "Just now"
+        )
         val metaParts = buildList {
-            add("Category: ${note.category}")
-            if (note.durationSeconds > 0L) add("Duration: ${formatDuration(note.durationSeconds)}")
-            add("Updated: ${formatTimestamp(note.updatedAt ?: note.createdAt)}")
+            if (note.category.isNotBlank()) {
+                add(context?.getString(R.string.export_category_prefix, note.category) ?: "Category: ${note.category}")
+            }
+            if (note.durationSeconds > 0L) {
+                val dur = formatDuration(note.durationSeconds)
+                add(context?.getString(R.string.export_duration_prefix, dur) ?: "Duration: $dur")
+            }
+            add(context?.getString(R.string.export_updated_prefix, formattedTime) ?: "Updated: $formattedTime")
         }
         appendLine("_${metaParts.joinToString(" • ")}_")
         if (note.tags.isNotEmpty()) {
-            appendLine("Tags: ${note.tags.joinToString(" ") { "#$it" }}")
+            val joinedTags = note.tags.joinToString(" ") { "#$it" }
+            appendLine(context?.getString(R.string.export_tags_prefix, joinedTags) ?: "Tags: $joinedTags")
         }
         appendLine()
 
         if (note.summary.isNotBlank()) {
-            appendLine("## Executive Summary")
+            val heading = context?.getString(R.string.detail_summary_full) ?: "Executive Summary"
+            appendLine("## $heading")
             appendLine(note.summary.trim())
             appendLine()
         }
 
         if (note.decisions.isNotEmpty()) {
-            appendLine("## Key Decisions")
+            val heading = context?.getString(R.string.key_decisions_title) ?: "Key Decisions"
+            appendLine("## $heading")
             note.decisions.forEach { decision ->
                 appendLine("- $decision")
             }
@@ -44,7 +58,8 @@ object NoteMarkdownExporter {
         }
 
         if (note.actionItems.isNotEmpty()) {
-            appendLine("## Action Items")
+            val heading = context?.getString(R.string.export_md_actions) ?: "Action Items"
+            appendLine("## $heading")
             note.actionItems.forEachIndexed { idx, task ->
                 val done = note.completedActionIndices.contains(idx.toLong())
                 appendLine("- [${if (done) "x" else " "}] $task")
@@ -53,13 +68,15 @@ object NoteMarkdownExporter {
         }
 
         if (note.factCheckSummary.isNotBlank() || note.sources.isNotEmpty()) {
-            appendLine("## Fact-Check Verification")
+            val heading = context?.getString(R.string.export_md_factcheck) ?: "Fact-Check Verification"
+            appendLine("## $heading")
             if (note.factCheckSummary.isNotBlank()) {
                 appendLine(note.factCheckSummary.trim())
                 appendLine()
             }
             if (note.sources.isNotEmpty()) {
-                appendLine("### Sources")
+                val sourcesHeading = context?.getString(R.string.export_md_sources) ?: "Sources"
+                appendLine("### $sourcesHeading")
                 note.sources.forEachIndexed { idx, src ->
                     appendLine("${idx + 1}. [${src.title}](${src.url})")
                 }
@@ -68,7 +85,8 @@ object NoteMarkdownExporter {
         }
 
         if (note.transcript.isNotBlank()) {
-            appendLine("## Transcript")
+            val heading = context?.getString(R.string.tab_transcript) ?: "Transcript"
+            appendLine("## $heading")
             appendLine(note.transcript.trim())
         }
     }.trim()

@@ -65,19 +65,11 @@
     <string name="verdict_disputed">Có tranh luận</string>
     <string name="verdict_needs_check">Cần kiểm tra</string>
 
-    <string name="sample_prompt_ev_chip">Thử: Kiểm chứng thuế xe điện</string>
-    <string name="sample_prompt_ev_text">Kiểm tra quy định ưu đãi thuế xe điện mới nhất năm 2026 và nhắc tôi gửi email cho kế toán thuế vào thứ Sáu.</string>
-    <string name="sample_prompt_bio_chip">Thử: Ghi chú sinh học</string>
-    <string name="sample_prompt_bio_text">Ghi chú bài giảng: Pha sáng quang hợp diễn ra ở màng thylakoid; ôn lại chương 6 trước bài kiểm tra thứ Ba.</string>
 
     <string name="type_memo_title">Ghi chú văn bản mới</string>
     <string name="type_memo_subtitle">Ghi lại suy nghĩ, đoạn bài giảng hoặc thông tin cần kiểm chứng. Gemini sẽ sắp xếp đầu việc và kiểm tra qua Google Search.</string>
     <string name="type_memo_placeholder">VD: Họp với nhóm thiết kế lúc 10h sáng mai. Kiểm tra thêm quy định mới về ưu đãi xe điện.</string>
     <string name="type_memo_submit">Phân tích &amp; Lưu</string>
-    <string name="template_ev_label">Thuế xe điện</string>
-    <string name="template_ev_prompt">Kiểm tra quy định ưu đãi thuế xe điện năm 2026 và nhắc tôi so sánh giữa thuê và mua.</string>
-    <string name="template_meeting_label">Tóm tắt họp</string>
-    <string name="template_meeting_prompt">Họp sản phẩm: Phát hành beta Android vào thứ Sáu, Maya phụ trách nội dung chào mừng, kiểm tra lại quy định chọn ảnh Play Store.</string>
 
     <string name="delete_note_title">Xóa ghi chú giọng nói?</string>
     <string name="delete_note_journal_body">“%1$s” và lịch sử trò chuyện AI sẽ bị xóa vĩnh viễn khỏi nhật ký đám mây.</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">KIỂM CHỨNG THÔNG TIN</string>
     <string name="export_sources_heading">Nguồn:</string>
     <string name="export_section_transcript">BẢN CHÉP LỜI</string>
+    <string name="export_md_actions">Việc cần làm</string>
+    <string name="export_md_factcheck">Kiểm chứng thông tin</string>
+    <string name="export_md_sources">Nguồn</string>
 
     <!-- Onboarding, Quota, Paywall & Guest -->
     <string name="auth_continue_guest">Tiếp tục với tư cách Khách (Truy cập ngay)</string>

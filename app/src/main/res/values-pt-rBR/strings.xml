@@ -65,19 +65,11 @@
     <string name="verdict_disputed">Contestado</string>
     <string name="verdict_needs_check">Precisa checar</string>
 
-    <string name="sample_prompt_ev_chip">Teste: Checagem crédito EV</string>
-    <string name="sample_prompt_ev_text">Verifique quais são as regras mais recentes de crédito fiscal para veículos elétricos em 2026 e me lembre de enviar e-mail ao contador na sexta.</string>
-    <string name="sample_prompt_bio_chip">Teste: Notas de biologia</string>
-    <string name="sample_prompt_bio_text">Nota rápida de aula: as reações luminosas da fotossíntese ocorrem nas membranas dos tilacoides; revisar o capítulo 6 antes da prova de terça.</string>
 
     <string name="type_memo_title">Nova nota digitada</string>
     <string name="type_memo_subtitle">Anote uma ideia, trecho de aula ou fato para checar. O Gemini organizará tarefas e verificará fatos na Pesquisa Google.</string>
     <string name="type_memo_placeholder">ex.: Reunião com a equipe de design amanhã às 10h. Verificar também as regras mais recentes de incentivo para EVs.</string>
     <string name="type_memo_submit">Analisar e salvar</string>
-    <string name="template_ev_label">Créditos EV</string>
-    <string name="template_ev_prompt">Verifique as regras atuais de incentivo para EVs em 2026 e me lembre de comparar assinatura e compra.</string>
-    <string name="template_meeting_label">Resumo da reunião</string>
-    <string name="template_meeting_prompt">Sync de produto: lançar beta Android sexta, Maya cuida do texto inicial e conferir regras do seletor de fotos da Play Store.</string>
 
     <string name="delete_note_title">Excluir nota de voz?</string>
     <string name="delete_note_journal_body">“%1$s” e o histórico de chat com IA serão removidos permanentemente do seu diário na nuvem.</string>
@@ -420,7 +412,7 @@
     <string name="review_done_editing_segment">Concluir</string>
     <string name="review_journal_details_title">Detalhes do registro do diário</string>
     <string name="review_category_label">Categoria</string>
-    <string name="review_tags_label">Tags</string>
+    <string name="review_tags_label">Etiquetas</string>
     <string name="review_add_action_item_hint">Adicionar uma tarefa…</string>
     <string name="review_action_item_hint">Tarefa</string>
     <string name="cd_add_action_item">Adicionar tarefa</string>
@@ -477,13 +469,16 @@
     <string name="export_category_prefix">Categoria: %1$s</string>
     <string name="export_duration_prefix">Duração: %1$s</string>
     <string name="export_updated_prefix">Atualizado: %1$s</string>
-    <string name="export_tags_prefix">Tags: %1$s</string>
+    <string name="export_tags_prefix">Etiquetas: %1$s</string>
     <string name="export_section_summary">RESUMO</string>
     <string name="export_section_decisions">DECISÕES-CHAVE</string>
     <string name="export_section_actions">ITENS DE AÇÃO</string>
     <string name="export_section_factcheck">VERIFICAÇÃO DE FATOS</string>
     <string name="export_sources_heading">Fontes:</string>
     <string name="export_section_transcript">TRANSCRIÇÃO</string>
+    <string name="export_md_actions">Itens de Ação</string>
+    <string name="export_md_factcheck">Verificação de Fatos</string>
+    <string name="export_md_sources">Fontes</string>
 
     <!-- Onboarding, Quota, Paywall & Guest -->
     <string name="auth_continue_guest">Continuar como convidado (Acesso imediato)</string>

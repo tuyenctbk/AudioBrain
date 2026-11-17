@@ -65,19 +65,11 @@
     <string name="verdict_disputed">विवादित</string>
     <string name="verdict_needs_check">जांच आवश्यक</string>
 
-    <string name="sample_prompt_ev_chip">आज़माएं: ईवी टैक्स क्रेडिट जांच</string>
-    <string name="sample_prompt_ev_text">2026 के नवीनतम संघीय ईवी टैक्स क्रेडिट नियम जांचें और शुक्रवार को सीपीए को ईमेल करने की याद दिलाएं।</string>
-    <string name="sample_prompt_bio_chip">आज़माएं: जीवविज्ञान व्याख्यान नोट्स</string>
-    <string name="sample_prompt_bio_text">त्वरित व्याख्यान नोट: प्रकाश संश्लेषण की प्रकाश अभिक्रियाएं थायलाकोइड झिल्लियों में होती हैं; मंगलवार की प्रश्नोत्तरी से पहले अध्याय 6 दोहराएं।</string>
 
     <string name="type_memo_title">नया टेक्स्ट-शैली मेमो</string>
     <string name="type_memo_subtitle">कोई विचार, व्याख्यान अंश या जांचने योग्य दावा लिखें। Gemini कार्य व्यवस्थित करेगा और Google Search से तथ्य सत्यापित करेगा।</string>
     <string name="type_memo_placeholder">जैसे: कल सुबह 10 बजे डिज़ाइन टीम के साथ मीटिंग। साथ ही नवीनतम ईवी टैक्स क्रेडिट नियम जांचें।</string>
     <string name="type_memo_submit">विश्लेषण करें और सहेजें</string>
-    <string name="template_ev_label">ईवी टैक्स क्रेडिट</string>
-    <string name="template_ev_prompt">2026 के लिए नवीनतम ईवी टैक्स क्रेडिट नियम जांचें और लीज़ बनाम खरीद विकल्प की तुलना करने की याद दिलाएं।</string>
-    <string name="template_meeting_label">मीटिंग सारांश</string>
-    <string name="template_meeting_prompt">उत्पाद सिंक: शुक्रवार तक Android बीटा जारी करें, माया ऑनबोर्डिंग कॉपी संभालेगी, और Play Store फ़ोटो पिकर नियम दोबारा जांचें।</string>
 
     <string name="delete_note_title">वॉइस नोट हटाएं?</string>
     <string name="delete_note_journal_body">“%1$s” और इसका AI चैट इतिहास आपके क्लाउड जर्नल से स्थायी रूप से हटा दिया जाएगा।</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">तथ्य-जांच सत्यापन</string>
     <string name="export_sources_heading">स्रोत:</string>
     <string name="export_section_transcript">ट्रांसक्रिप्ट</string>
+    <string name="export_md_actions">कार्य आइटम</string>
+    <string name="export_md_factcheck">तथ्य-जांच सत्यापन</string>
+    <string name="export_md_sources">स्रोत</string>
     <string name="auth_continue_guest">अतिथि के रूप में जारी रखें (तुरंत एक्सेस)</string>
     <string name="auth_guest_display_name">अतिथि एक्सप्लोरर</string>
     <string name="onboarding_skip">छोड़ें</string>

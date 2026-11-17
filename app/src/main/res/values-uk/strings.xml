@@ -65,19 +65,11 @@
     <string name="verdict_disputed">Спростовано / Спірно</string>
     <string name="verdict_needs_check">Потребує перевірки</string>
 
-    <string name="sample_prompt_ev_chip">Спробуйте: пільги на електромобілі</string>
-    <string name="sample_prompt_ev_text">Перевір актуальні федеральні правила податкових пільг на електромобілі на 2026 рік і нагадай написати бухгалтеру в пʼятницю.</string>
-    <string name="sample_prompt_bio_chip">Спробуйте: конспект з біології</string>
-    <string name="sample_prompt_bio_text">Коротка нотатка з лекції: світлові реакції фотосинтезу відбуваються в мембранах тилакоїдів; повторити розділ 6 перед вівторковим тестом.</string>
 
     <string name="type_memo_title">Нова текстова нотатка</string>
     <string name="type_memo_subtitle">Запишіть думку, фрагмент лекції чи твердження для перевірки. Gemini структурує завдання та перевірить факти через Google Пошук.</string>
     <string name="type_memo_placeholder">напр., Зустріч із командою дизайну завтра о 10:00. Також перевірити нові правила пільг на електромобілі.</string>
     <string name="type_memo_submit">Аналізувати та зберегти</string>
-    <string name="template_ev_label">Пільги на електромобілі</string>
-    <string name="template_ev_prompt">Перевір останні правила податкових пільг на електромобілі на 2026 рік і нагадай порівняти лізинг і купівлю.</string>
-    <string name="template_meeting_label">Підсумок зустрічі</string>
-    <string name="template_meeting_prompt">Синк щодо продукту: випустити Android-бету до пʼятниці, Мая готує тексти онбордингу, ще раз перевірити правила вибору фото Play Store.</string>
 
     <string name="delete_note_title">Видалити голосову нотатку?</string>
     <string name="delete_note_journal_body">«%1$s» та історія чату зі ШІ будуть остаточно видалені з вашого хмарного щоденника.</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">ПЕРЕВІРКА ФАКТІВ</string>
     <string name="export_sources_heading">Джерела:</string>
     <string name="export_section_transcript">РОЗШИФРОВКА</string>
+    <string name="export_md_actions">Завдання</string>
+    <string name="export_md_factcheck">Перевірка фактів</string>
+    <string name="export_md_sources">Джерела</string>
 
     <!-- Onboarding, Quota, Paywall & Guest -->
     <string name="auth_continue_guest">Продовжити як гість (Миттєвий доступ)</string>

@@ -4,8 +4,12 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.os.Bundle
 import android.provider.CalendarContract
+import androidx.credentials.CustomCredential
+import androidx.credentials.PasswordCredential
 import androidx.test.core.app.ApplicationProvider
+import com.example.audio.AudioPlayerManager
 import com.example.data.ai.AudioBrainAiService
 import com.example.data.export.TaskActionUtils
 import com.example.data.model.ClaimVerdictStatus
@@ -13,7 +17,10 @@ import com.example.data.model.NoteCategory
 import com.example.data.model.VoiceNote
 import com.example.data.offline.PendingMemoKind
 import com.example.data.offline.PendingMemoStore
+import com.example.data.repository.VoiceNotesRepository
+import com.example.ui.auth.extractGoogleIdToken
 import com.example.ui.auth.findActivity
+import com.example.ui.recording.formatRecordingDuration
 import com.example.ui.review.TranscriptReviewDraft
 import com.example.widget.WidgetSnapshot
 import com.example.widget.WidgetSnapshotStore
@@ -213,5 +220,137 @@ class AudioBrainAndroidFeaturesTest {
         assertTrue(context.getString(R.string.edit_draft_name_required_error).isNotBlank())
         assertTrue(context.getString(R.string.action_open_settings).isNotBlank())
         assertTrue(context.getString(R.string.err_note_not_found_reverify).isNotBlank())
+    }
+
+    @Test
+    fun resolveRootDestination_transitionsAcrossOnboardingAuthGuestAndSignedInStates() {
+        assertEquals(
+            RootDestination.Onboarding,
+            resolveRootDestination(
+                hasCompletedOnboarding = false,
+                userId = "uid-123",
+                displayName = "Alice",
+                email = "alice@example.com",
+                isGuestMode = false
+            )
+        )
+
+        assertEquals(
+            RootDestination.Auth,
+            resolveRootDestination(
+                hasCompletedOnboarding = true,
+                userId = null,
+                displayName = null,
+                email = null,
+                isGuestMode = false
+            )
+        )
+
+        assertEquals(
+            RootDestination.Auth,
+            resolveRootDestination(
+                hasCompletedOnboarding = true,
+                userId = "   ",
+                displayName = null,
+                email = null,
+                isGuestMode = false
+            )
+        )
+
+        assertEquals(
+            RootDestination.Authenticated(
+                uid = VoiceNotesRepository.GUEST_USER_ID,
+                displayName = null,
+                email = null,
+                isGuest = true
+            ),
+            resolveRootDestination(
+                hasCompletedOnboarding = true,
+                userId = null,
+                displayName = null,
+                email = null,
+                isGuestMode = true
+            )
+        )
+
+        assertEquals(
+            RootDestination.Authenticated(
+                uid = "firebase-uid-999",
+                displayName = "Tuyen",
+                email = "tuyen@example.com",
+                isGuest = false
+            ),
+            resolveRootDestination(
+                hasCompletedOnboarding = true,
+                userId = "firebase-uid-999",
+                displayName = "Tuyen",
+                email = "tuyen@example.com",
+                isGuestMode = true
+            )
+        )
+    }
+
+    @Test
+    fun extractGoogleIdToken_ignoresNonGoogleCredentials() {
+        val passwordCredential = PasswordCredential("user@example.com", "secret")
+        val otherCustomCredential = CustomCredential("com.example.OTHER_TOKEN", Bundle())
+
+        assertNull(extractGoogleIdToken(passwordCredential))
+        assertNull(extractGoogleIdToken(otherCustomCredential))
+    }
+
+    @Test
+    fun formatRecordingDuration_formatsMinutesAndSecondsCleanly() {
+        assertEquals("00:00", formatRecordingDuration(-3L))
+        assertEquals("00:09", formatRecordingDuration(9L))
+        assertEquals("01:05", formatRecordingDuration(65L))
+        assertEquals("12:34", formatRecordingDuration(754L))
+    }
+
+    @Test
+    fun audioPlayerManager_cycleSpeedAndRelease_preservesSpeedAndClearsPlaybackState() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val player = AudioPlayerManager(this, context)
+
+        assertEquals(1.0f, player.state.value.playbackSpeed, 0.001f)
+        assertFalse(player.state.value.hasAudio)
+
+        player.cycleSpeed()
+        assertEquals(1.25f, player.state.value.playbackSpeed, 0.001f)
+
+        player.cycleSpeed()
+        assertEquals(1.5f, player.state.value.playbackSpeed, 0.001f)
+
+        val missingFile = java.io.File(context.cacheDir, "nonexistent_${System.nanoTime()}.m4a")
+        player.loadFile(missingFile, autoPlay = true)
+        assertFalse(player.state.value.hasAudio)
+        assertFalse(player.state.value.isPlaying)
+        assertEquals(1.5f, player.state.value.playbackSpeed, 0.001f)
+
+        player.release()
+        assertFalse(player.state.value.hasAudio)
+        assertFalse(player.state.value.isPrepared)
+        assertFalse(player.state.value.isPlaying)
+        assertEquals(1.5f, player.state.value.playbackSpeed, 0.001f)
+    }
+
+    @Test
+    fun markdownExporter_withContext_usesLocalizedStringsCleanly() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val note = VoiceNote(
+            id = "n-md",
+            title = "",
+            summary = "Summary point",
+            transcript = "[00:00] Sample entry",
+            category = NoteCategory.JOURNAL.label,
+            actionItems = listOf("Follow up"),
+            factCheckSummary = "Checked fact"
+        )
+
+        val md = com.example.data.export.NoteMarkdownExporter.toMarkdown(note, context)
+        assertTrue(md.contains(context.getString(R.string.fallback_untitled_voice_note)))
+        assertTrue(md.contains("## ${context.getString(R.string.export_md_actions)}"))
+        assertTrue(md.contains("## ${context.getString(R.string.export_md_factcheck)}"))
+        assertTrue(md.contains("## ${context.getString(R.string.tab_transcript)}"))
     }
 }

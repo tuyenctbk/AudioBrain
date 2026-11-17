@@ -65,19 +65,11 @@
     <string name="verdict_disputed">Contestato</string>
     <string name="verdict_needs_check">Da verificare</string>
 
-    <string name="sample_prompt_ev_chip">Prova: Verifica incentivi EV</string>
-    <string name="sample_prompt_ev_text">Controlla le ultime regole federali sui crediti fiscali per auto elettriche del 2026 e ricordami di scrivere al commercialista venerdì.</string>
-    <string name="sample_prompt_bio_chip">Prova: Appunti di biologia</string>
-    <string name="sample_prompt_bio_text">Nota rapida di lezione: le reazioni luminose della fotosintesi avvengono nelle membrane dei tilacoidi; ripassare il capitolo 6 prima del quiz di martedì.</string>
 
     <string name="type_memo_title">Nuova nota scritta</string>
     <string name="type_memo_subtitle">Annota un\'idea, un estratto di lezione o un fatto da verificare. Gemini organizzerà le attività e verificherà i dati con Google Search.</string>
     <string name="type_memo_placeholder">es. Riunione con il team design domani alle 10:00. Controllare anche le ultime norme sui bonus auto elettriche.</string>
     <string name="type_memo_submit">Analizza e salva</string>
-    <string name="template_ev_label">Crediti EV</string>
-    <string name="template_ev_prompt">Controlla le ultime regole sui crediti EV per il 2026 e ricordami di confrontare noleggio e acquisto.</string>
-    <string name="template_meeting_label">Riepilogo riunione</string>
-    <string name="template_meeting_prompt">Sync prodotto: rilasciare beta Android venerdì, Maya cura i testi onboarding, ricontrollare le regole del selettore foto su Play Store.</string>
 
     <string name="delete_note_title">Eliminare la nota vocale?</string>
     <string name="delete_note_journal_body">“%1$s” e la sua cronologia chat IA verranno rimossi definitivamente dal tuo diario cloud.</string>
@@ -111,7 +103,7 @@
     <string name="cd_expand_recording_sheet">Espandi pannello di registrazione</string>
 
     <string name="tab_overview">Riepilogo e attività</string>
-    <string name="tab_factcheck">Fact-Check</string>
+    <string name="tab_factcheck">Verifica fatti</string>
     <string name="tab_transcript">Trascrizione</string>
     <string name="tab_chat">Chiedi all\'IA</string>
 
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">VERIFICA DEI FATTI</string>
     <string name="export_sources_heading">Fonti:</string>
     <string name="export_section_transcript">TRASCRIZIONE</string>
+    <string name="export_md_actions">Azioni</string>
+    <string name="export_md_factcheck">Verifica dei fatti</string>
+    <string name="export_md_sources">Fonti</string>
     <string name="auth_continue_guest">Continua come ospite (Accesso istantaneo)</string>
     <string name="auth_guest_display_name">Esploratore ospite</string>
     <string name="onboarding_skip">Salta</string>

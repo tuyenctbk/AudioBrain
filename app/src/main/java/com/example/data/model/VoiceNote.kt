@@ -97,17 +97,6 @@ object NoteTagHelper {
     const val MAX_TAGS_PER_NOTE = 10
     const val MAX_TAG_LENGTH = 32
 
-    val DEFAULT_SUGGESTIONS: List<String> = listOf(
-        "work",
-        "ideas",
-        "meeting",
-        "research",
-        "study",
-        "personal",
-        "todo",
-        "finance"
-    )
-
     private val invalidCharsRegex = Regex("[^a-z0-9_-]+")
     private val whitespaceRegex = Regex("\\s+")
     private val multiDashRegex = Regex("-{2,}")

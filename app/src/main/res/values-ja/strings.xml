@@ -65,19 +65,11 @@
     <string name="verdict_disputed">異論・相違あり</string>
     <string name="verdict_needs_check">要確認</string>
 
-    <string name="sample_prompt_ev_chip">例: EV税制優遇の事実確認</string>
-    <string name="sample_prompt_ev_text">2026年のEV税額控除の最新ルールを確認して、金曜日に税理士へメールするようリマインドして。</string>
-    <string name="sample_prompt_bio_chip">例: 生物学の講義メモ</string>
-    <string name="sample_prompt_bio_text">講義メモ: 光合成の光化学反応はチラコイド膜で起こる。火曜の小テスト前に第6章を復習する。</string>
 
     <string name="type_memo_title">テキストで新規メモ</string>
     <string name="type_memo_subtitle">考え、講義メモ、確認したい情報を入力。Geminiがタスクを整理しGoogle Searchで事実確認します。</string>
     <string name="type_memo_placeholder">例: 明日10時にデザインチームと会議。最新のEV補助金の条件も確認する。</string>
     <string name="type_memo_submit">解析して保存</string>
-    <string name="template_ev_label">EV税制優遇</string>
-    <string name="template_ev_prompt">2026年のEV税額控除の最新ルールを確認し、リースと購入の比較をリマインドして。</string>
-    <string name="template_meeting_label">会議の要点</string>
-    <string name="template_meeting_prompt">製品同期会議: 金曜までにAndroidベータ公開、オンボーディング文言はMaya担当、Playストアのフォトピッカー規約を再確認。</string>
 
     <string name="delete_note_title">音声ノートを削除しますか？</string>
     <string name="delete_note_journal_body">「%1$s」とAIチャット履歴はクラウドジャーナルから完全に削除されます。</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">ファクトチェック検証</string>
     <string name="export_sources_heading">出典:</string>
     <string name="export_section_transcript">文字起こし</string>
+    <string name="export_md_actions">アクションアイテム</string>
+    <string name="export_md_factcheck">ファクトチェック検証</string>
+    <string name="export_md_sources">出典</string>
     <string name="auth_continue_guest">ゲストとして続行（すぐに利用）</string>
     <string name="auth_guest_display_name">ゲストエクスプローラー</string>
     <string name="onboarding_skip">スキップ</string>

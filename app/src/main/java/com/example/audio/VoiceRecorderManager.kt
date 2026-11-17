@@ -93,10 +93,13 @@ class VoiceRecorderManager(context: Context) {
             val mediaRecorder = createAndStartMediaRecorder(
                 file = file,
                 audioSource = MediaRecorder.AudioSource.VOICE_RECOGNITION
-            ) ?: createAndStartMediaRecorder(
-                file = file,
-                audioSource = MediaRecorder.AudioSource.MIC
-            ) ?: throw IllegalStateException(appContext.getString(R.string.err_mic_init_failed))
+            ) ?: run {
+                file.delete()
+                createAndStartMediaRecorder(
+                    file = file,
+                    audioSource = MediaRecorder.AudioSource.MIC
+                )
+            } ?: throw IllegalStateException(appContext.getString(R.string.err_mic_init_failed))
 
             recorder = mediaRecorder
             outputFile = file

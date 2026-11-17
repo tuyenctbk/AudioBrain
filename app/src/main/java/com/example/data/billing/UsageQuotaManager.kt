@@ -141,8 +141,9 @@ data class UsageQuotaSnapshot(
  */
 class UsageQuotaManager(context: Context) {
 
+    private val appContext = context.applicationContext
     private val prefs: SharedPreferences =
-        context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     @Volatile
     private var activeUserId: String? = null
@@ -305,9 +306,14 @@ class UsageQuotaManager(context: Context) {
         )
     }
 
+    private fun firestoreInstance(): FirebaseFirestore? = runCatching {
+        val dbId = appContext.getString(R.string.firestore_database_id)
+        if (dbId.isNotBlank()) FirebaseFirestore.getInstance(dbId) else null
+    }.getOrNull()
+
     private fun syncFromFirestore(userId: String) {
         val periodIso = currentYearMonthKey()
-        val db = runCatching { FirebaseFirestore.getInstance() }.getOrNull() ?: return
+        val db = firestoreInstance() ?: return
         db.collection("users")
             .document(userId)
             .collection("usageQuota")
@@ -352,7 +358,7 @@ class UsageQuotaManager(context: Context) {
         val userId = activeUserId
         if (userId.isNullOrBlank() || activeIsGuest) return
         val periodIso = currentYearMonthKey()
-        val db = runCatching { FirebaseFirestore.getInstance() }.getOrNull() ?: return
+        val db = firestoreInstance() ?: return
         val payload = hashMapOf(
             "userId" to userId,
             "periodIso" to periodIso,

@@ -67,7 +67,7 @@ fun ManageTagsDialog(
     var tagInput by remember { mutableStateOf("") }
 
     val allSuggestions = remember(suggestedTags) {
-        (suggestedTags + NoteTagHelper.DEFAULT_SUGGESTIONS)
+        suggestedTags
             .mapNotNull { NoteTagHelper.normalizeTag(it) }
             .distinct()
     }
@@ -205,43 +205,45 @@ fun ManageTagsDialog(
                     }
                 }
 
-                Text(
-                    text = stringResource(R.string.tags_quick_label),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    allSuggestions.forEach { suggestion ->
-                        val isSelected = selectedTags.contains(suggestion)
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = {
-                                selectedTags = if (isSelected) {
-                                    selectedTags.filterNot { it == suggestion }
-                                } else {
-                                    NoteTagHelper.normalizeTags(selectedTags + suggestion)
-                                }
-                            },
-                            leadingIcon = if (isSelected) {
-                                {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Check,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                }
-                            } else null,
-                            label = { Text("#$suggestion") },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                selectedLeadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            ),
-                            modifier = Modifier.testTag("quick_tag_$suggestion")
-                        )
+                if (allSuggestions.isNotEmpty()) {
+                    Text(
+                        text = stringResource(R.string.tags_quick_label),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        allSuggestions.forEach { suggestion ->
+                            val isSelected = selectedTags.contains(suggestion)
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    selectedTags = if (isSelected) {
+                                        selectedTags.filterNot { it == suggestion }
+                                    } else {
+                                        NoteTagHelper.normalizeTags(selectedTags + suggestion)
+                                    }
+                                },
+                                leadingIcon = if (isSelected) {
+                                    {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(15.dp)
+                                        )
+                                    }
+                                } else null,
+                                label = { Text("#$suggestion") },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    selectedLeadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                ),
+                                modifier = Modifier.testTag("quick_tag_$suggestion")
+                            )
+                        }
                     }
                 }
             }

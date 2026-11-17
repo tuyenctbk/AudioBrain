@@ -65,19 +65,11 @@
     <string name="verdict_disputed">存有爭議</string>
     <string name="verdict_needs_check">待查核</string>
 
-    <string name="sample_prompt_ev_chip">試試：電動車稅務查核</string>
-    <string name="sample_prompt_ev_text">查詢 2026 年聯邦電動車稅額抵免最新規定，並提醒我週五寫信給會計師。</string>
-    <string name="sample_prompt_bio_chip">試試：生物課筆記</string>
-    <string name="sample_prompt_bio_text">課堂速記：光合作用的光反應發生在類囊體膜上；週二小考前複習第 6 章。</string>
 
     <string name="type_memo_title">新增文字備忘</string>
     <string name="type_memo_subtitle">寫下靈感、課堂片段或待查核說法。Gemini 將整理任務並透過 Google Search 核實事實。</string>
     <string name="type_memo_placeholder">例如：明天上午 10 點與設計團隊開會，並確認最新電動車補助條件。</string>
     <string name="type_memo_submit">分析並儲存</string>
-    <string name="template_ev_label">電動車補助</string>
-    <string name="template_ev_prompt">查詢 2026 年電動車稅額抵免最新規定，並提醒我比較租賃與購買方案。</string>
-    <string name="template_meeting_label">會議摘要</string>
-    <string name="template_meeting_prompt">產品同步：週五前發布 Android 測試版，Maya 負責導覽文案，複查 Play 商店相片選擇器規範。</string>
 
     <string name="delete_note_title">刪除語音筆記？</string>
     <string name="delete_note_journal_body">「%1$s」及其 AI 對話紀錄將從雲端日誌永久移除。</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">事實查核驗證</string>
     <string name="export_sources_heading">來源：</string>
     <string name="export_section_transcript">逐字稿</string>
+    <string name="export_md_actions">行動項目</string>
+    <string name="export_md_factcheck">事實查核驗證</string>
+    <string name="export_md_sources">來源</string>
 
     <!-- Onboarding, Quota, Paywall & Guest -->
     <string name="auth_continue_guest">以訪客身分繼續（即時體驗）</string>

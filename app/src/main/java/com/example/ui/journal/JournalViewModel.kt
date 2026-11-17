@@ -36,6 +36,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -46,6 +47,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -83,6 +85,15 @@ data class DigestUiState(
     val content: String = "",
     val sources: List<FactSource> = emptyList(),
     val errorMessage: String? = null
+)
+
+data class PlayableJournalAudio(
+    val key: String,
+    val title: String,
+    val durationSeconds: Long,
+    val isDraft: Boolean,
+    val memo: PendingMemo? = null,
+    val noteId: String? = null
 )
 
 class JournalViewModel(
@@ -146,6 +157,11 @@ class JournalViewModel(
     private val _playingDraftId = MutableStateFlow<String?>(null)
     val playingDraftId: StateFlow<String?> = _playingDraftId.asStateFlow()
 
+    private val _playingAudioKey = MutableStateFlow<String?>(null)
+    val playingAudioKey: StateFlow<String?> = _playingAudioKey.asStateFlow()
+
+    private val _localAudioRevision = MutableStateFlow(0)
+
     val draftPlaybackState: StateFlow<AudioPlaybackState> = draftAudioPlayer.state
 
     private val _digestState = MutableStateFlow(DigestUiState())
@@ -205,7 +221,11 @@ class JournalViewModel(
 
     private val rawNotesState: StateFlow<NotesListUiState> = repository.observeNotes(currentUserId)
         .onEach { notes ->
-            WidgetSnapshotStore.saveAndRefresh(context, notes, isSignedIn = true)
+            WidgetSnapshotStore.saveAndRefresh(
+                context = context,
+                notes = notes,
+                isSignedIn = currentUserId != VoiceNotesRepository.GUEST_USER_ID
+            )
         }
         .map<List<VoiceNote>, NotesListUiState> { NotesListUiState.Success(it) }
         .catch { error ->
@@ -225,6 +245,50 @@ class JournalViewModel(
 
     val allNotes: StateFlow<List<VoiceNote>> = rawNotesState
         .map { state -> (state as? NotesListUiState.Success)?.notes.orEmpty() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+            initialValue = emptyList()
+        )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val playableJournalAudios: StateFlow<List<PlayableJournalAudio>> = combine(
+        pendingMemos,
+        allNotes,
+        _localAudioRevision
+    ) { memos, notes, _ -> memos to notes }
+        .mapLatest { (memos, notes) ->
+            val draftItems = memos
+                .filter { it.kind == PendingMemoKind.AUDIO }
+                .sortedByDescending { it.createdAtMs }
+                .mapNotNull { memo ->
+                    if (pendingStore.getAudioFile(memo) == null) return@mapNotNull null
+                    PlayableJournalAudio(
+                        key = "draft:${memo.id}",
+                        title = memo.label?.takeIf { it.isNotBlank() }
+                            ?: context.getString(R.string.draft_saved_label_fallback),
+                        durationSeconds = memo.durationSeconds,
+                        isDraft = true,
+                        memo = memo
+                    )
+                }
+
+            val noteItems = notes
+                .take(20)
+                .mapNotNull { note ->
+                    val file = localAudioStore.getAudioFile(note.id) ?: return@mapNotNull null
+                    if (file.length() == 0L) return@mapNotNull null
+                    PlayableJournalAudio(
+                        key = "note:${note.id}",
+                        title = note.title.ifBlank { context.getString(R.string.fallback_voice_note_title) },
+                        durationSeconds = note.durationSeconds,
+                        isDraft = false,
+                        noteId = note.id
+                    )
+                }
+
+            draftItems + noteItems
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
@@ -459,6 +523,11 @@ class JournalViewModel(
 
     fun startRecording() {
         clearCaptureMessages()
+        if (draftAudioPlayer.state.value.hasAudio) {
+            draftAudioPlayer.release()
+            _playingDraftId.value = null
+            _playingAudioKey.value = null
+        }
         val started = recorderManager.startRecording(
             scope = viewModelScope,
             userId = currentUserId,
@@ -676,12 +745,45 @@ class JournalViewModel(
             )
             return
         }
+        val key = "draft:${memo.id}"
         if (_playingDraftId.value == memo.id && draftAudioPlayer.state.value.hasAudio) {
             draftAudioPlayer.togglePlayPause()
         } else {
             _playingDraftId.value = memo.id
+            _playingAudioKey.value = key
             draftAudioPlayer.loadFile(audioFile, autoPlay = true)
         }
+    }
+
+    fun togglePlayRecordedAudio(item: PlayableJournalAudio) {
+        if (recorderManager.state.value.isRecording) return
+        item.memo?.let { memo ->
+            togglePlayDraft(memo)
+            return
+        }
+        val targetNoteId = item.noteId ?: return
+        if (_playingAudioKey.value == item.key && draftAudioPlayer.state.value.hasAudio) {
+            draftAudioPlayer.togglePlayPause()
+            return
+        }
+        viewModelScope.launch {
+            val audioFile = localAudioStore.getAudioFile(targetNoteId)
+            if (audioFile == null) {
+                _captureState.value = _captureState.value.copy(
+                    errorMessage = context.getString(R.string.err_audio_unavailable)
+                )
+                return@launch
+            }
+            _playingDraftId.value = null
+            _playingAudioKey.value = item.key
+            draftAudioPlayer.loadFile(audioFile, autoPlay = true)
+        }
+    }
+
+    fun stopAudioPlayback() {
+        draftAudioPlayer.release()
+        _playingDraftId.value = null
+        _playingAudioKey.value = null
     }
 
     fun seekDraftPlayback(positionMs: Long) {
@@ -699,9 +801,8 @@ class JournalViewModel(
     }
 
     fun transcribeSavedDraft(memoId: String) {
-        if (_playingDraftId.value == memoId) {
-            draftAudioPlayer.release()
-            _playingDraftId.value = null
+        if (_playingDraftId.value == memoId || _playingAudioKey.value == "draft:$memoId") {
+            stopAudioPlayback()
         }
         viewModelScope.launch {
             pendingStore.markReadyForTranscription(currentUserId, memoId)
@@ -710,9 +811,8 @@ class JournalViewModel(
     }
 
     fun transcribeAllSavedDrafts() {
-        if (_playingDraftId.value != null) {
-            draftAudioPlayer.release()
-            _playingDraftId.value = null
+        if (_playingDraftId.value != null || _playingAudioKey.value?.startsWith("draft:") == true) {
+            stopAudioPlayback()
         }
         viewModelScope.launch {
             syncPendingMemos(autoTriggered = false, includeDeferred = true)
@@ -726,9 +826,8 @@ class JournalViewModel(
     }
 
     fun discardPendingMemo(memoId: String) {
-        if (_playingDraftId.value == memoId) {
-            draftAudioPlayer.release()
-            _playingDraftId.value = null
+        if (_playingDraftId.value == memoId || _playingAudioKey.value == "draft:$memoId") {
+            stopAudioPlayback()
         }
         viewModelScope.launch {
             pendingStore.remove(currentUserId, memoId)
@@ -835,6 +934,7 @@ class JournalViewModel(
 
                 if (audioBytesForLocalPlayback != null) {
                     localAudioStore.saveAudio(savedNoteId, audioBytesForLocalPlayback)
+                    _localAudioRevision.value += 1
                 }
                 pendingStore.remove(currentUserId, memo.id)
 
@@ -1038,10 +1138,14 @@ class JournalViewModel(
     }
 
     fun deleteNote(noteId: String) {
+        if (_playingAudioKey.value == "note:$noteId") {
+            stopAudioPlayback()
+        }
         viewModelScope.launch {
             repository.deleteNote(noteId)
                 .onSuccess {
                     localAudioStore.deleteAudio(noteId)
+                    _localAudioRevision.value += 1
                 }
         }
     }
@@ -1053,8 +1157,7 @@ class JournalViewModel(
     }
 
     fun stopActiveRecordingForSignOut() {
-        draftAudioPlayer.release()
-        _playingDraftId.value = null
+        stopAudioPlayback()
         recorderManager.cancelRecording()
         RecordingForegroundService.stop(context)
         viewModelScope.launch {

@@ -65,19 +65,11 @@
     <string name="verdict_disputed">Contesté</string>
     <string name="verdict_needs_check">À vérifier</string>
 
-    <string name="sample_prompt_ev_chip">Essayer : Vérif crédit véhicule électrique</string>
-    <string name="sample_prompt_ev_text">Vérifie les dernières règles fédérales sur les crédits d\'impôt VE pour 2026 et rappelle-moi d\'écrire à mon comptable vendredi.</string>
-    <string name="sample_prompt_bio_chip">Essayer : Notes de biologie</string>
-    <string name="sample_prompt_bio_text">Note rapide de cours : les réactions lumineuses de la photosynthèse ont lieu dans les membranes thylakoïdes ; revoir le chapitre 6 avant le contrôle de mardi.</string>
 
     <string name="type_memo_title">Nouvelle note écrite</string>
     <string name="type_memo_subtitle">Notez une idée, un extrait de cours ou une affirmation à vérifier. Gemini structurera les tâches et vérifiera les faits via Google Search.</string>
     <string name="type_memo_placeholder">ex. Réunion avec l\'équipe design demain à 10h. Vérifier aussi les dernières règles sur les aides VE.</string>
     <string name="type_memo_submit">Analyser et enregistrer</string>
-    <string name="template_ev_label">Aides VE</string>
-    <string name="template_ev_prompt">Vérifie les dernières règles sur les crédits VE en 2026 et rappelle-moi de comparer location et achat.</string>
-    <string name="template_meeting_label">Compte rendu</string>
-    <string name="template_meeting_prompt">Point produit : livrer la bêta Android vendredi, Maya gère les textes d\'accueil, vérifier les règles du sélecteur photo Play Store.</string>
 
     <string name="delete_note_title">Supprimer la note vocale ?</string>
     <string name="delete_note_journal_body">« %1$s » et son historique de discussion IA seront définitivement supprimés de votre journal cloud.</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">VÉRIFICATION DES FAITS</string>
     <string name="export_sources_heading">Sources :</string>
     <string name="export_section_transcript">TRANSCRIPTION</string>
+    <string name="export_md_actions">Actions à mener</string>
+    <string name="export_md_factcheck">Vérification des faits</string>
+    <string name="export_md_sources">Sources</string>
     <string name="auth_continue_guest">Continuer en tant qu\'invité (Accès immédiat)</string>
     <string name="auth_guest_display_name">Explorateur invité</string>
     <string name="onboarding_skip">Passer</string>

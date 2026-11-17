@@ -65,19 +65,11 @@
     <string name="verdict_disputed">이견 있음</string>
     <string name="verdict_needs_check">확인 필요</string>
 
-    <string name="sample_prompt_ev_chip">예시: 전기차 보조금 팩트체크</string>
-    <string name="sample_prompt_ev_text">2026년 전기차 세액 공제 최신 규정을 확인하고 금요일에 세무사에게 이메일 보내도록 알려줘.</string>
-    <string name="sample_prompt_bio_chip">예시: 생물학 강의 노트</string>
-    <string name="sample_prompt_bio_text">빠른 강의 메모: 광합성의 명반응은 틸라코이드 막에서 일어난다. 화요일 퀴즈 전에 6장을 복습하자.</string>
 
     <string name="type_memo_title">새 텍스트 메모</string>
     <string name="type_memo_subtitle">생각, 강의 내용 또는 확인할 주장을 적으세요. Gemini가 할 일을 정리하고 Google Search로 사실을 검증합니다.</string>
     <string name="type_memo_placeholder">예: 내일 오전 10시 디자인 팀 회의. 전기차 보조금 최신 규정도 확인하기.</string>
     <string name="type_memo_submit">분석 및 저장</string>
-    <string name="template_ev_label">전기차 세제 혜택</string>
-    <string name="template_ev_prompt">2026년 전기차 세액 공제 최신 규정을 확인하고 리스와 구매 옵션을 비교하도록 알려줘.</string>
-    <string name="template_meeting_label">회의 요약</string>
-    <string name="template_meeting_prompt">제품 싱크: 금요일까지 Android 베타 출시, 온보딩 문구는 Maya 담당, Play 스토어 사진 선택기 규정 재확인.</string>
 
     <string name="delete_note_title">음성 노트를 삭제할까요?</string>
     <string name="delete_note_journal_body">“%1$s” 및 AI 채팅 기록이 클라우드 저널에서 영구적으로 삭제됩니다.</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">팩트체크 검증</string>
     <string name="export_sources_heading">출처:</string>
     <string name="export_section_transcript">전사</string>
+    <string name="export_md_actions">작업 항목</string>
+    <string name="export_md_factcheck">팩트체크 검증</string>
+    <string name="export_md_sources">출처</string>
     <string name="auth_continue_guest">게스트로 계속하기 (즉시 시작)</string>
     <string name="auth_guest_display_name">게스트 탐험가</string>
     <string name="onboarding_skip">건너뛰기</string>

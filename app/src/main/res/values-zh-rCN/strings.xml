@@ -65,19 +65,11 @@
     <string name="verdict_disputed">存有争议</string>
     <string name="verdict_needs_check">待核查</string>
 
-    <string name="sample_prompt_ev_chip">试试：核查电动车抵税政策</string>
-    <string name="sample_prompt_ev_text">查询 2026 年联邦电动车税收抵免最新规则，并提醒我周五发邮件给税务顾问。</string>
-    <string name="sample_prompt_bio_chip">试试：生物课笔记</string>
-    <string name="sample_prompt_bio_text">随堂速记：光合作用的光反应发生在类囊体膜上；周二小测前复习第 6 章。</string>
 
     <string name="type_memo_title">新建文字备忘</string>
     <string name="type_memo_subtitle">记录灵感、课堂片段或待核查说法。Gemini 将整理待办并通过 Google Search 核实信息。</string>
     <string name="type_memo_placeholder">例如：明天上午10点与设计团队开会，同时核查最新电动车补贴规则。</string>
     <string name="type_memo_submit">分析并保存</string>
-    <string name="template_ev_label">电动车抵税</string>
-    <string name="template_ev_prompt">核查 2026 年电动车税收抵免最新规则，并提醒我对比租赁与购买方案。</string>
-    <string name="template_meeting_label">会议纪要</string>
-    <string name="template_meeting_prompt">产品同步：周五前发布 Android 测试版，Maya 负责引导文案，复核 Play 商店照片选择器规则。</string>
 
     <string name="delete_note_title">删除语音笔记？</string>
     <string name="delete_note_journal_body">“%1$s”及其 AI 聊天记录将从云端日志中永久移除。</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">事实核查验证</string>
     <string name="export_sources_heading">参考来源：</string>
     <string name="export_section_transcript">转录文本</string>
+    <string name="export_md_actions">行动项</string>
+    <string name="export_md_factcheck">事实核查验证</string>
+    <string name="export_md_sources">参考来源</string>
 
     <!-- Onboarding, Quota, Paywall & Guest -->
     <string name="auth_continue_guest">以访客身份继续（即时体验）</string>

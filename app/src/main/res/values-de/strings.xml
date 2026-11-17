@@ -15,7 +15,7 @@
 
     <string name="feature_transcribe_title">Sofortige Sprachtranskription</string>
     <string name="feature_transcribe_desc">Gemini Flash verwandelt Roh-Audio in saubere Transkripte &amp; Aufgabenlisten.</string>
-    <string name="feature_factcheck_title">Live Google Search Grounding</string>
+    <string name="feature_factcheck_title">Live-Faktenprüfung mit Google Suche</string>
     <string name="feature_factcheck_desc">Gleicht Regeln, Zahlen und Fragen mit echten Quellenlinks ab.</string>
     <string name="feature_assistant_title">Notiz-Chatbot mit Quellen</string>
     <string name="feature_assistant_desc">Stelle Rückfragen zu jeder Notiz mit streamenden KI-Antworten.</string>
@@ -51,7 +51,7 @@
 
     <string name="category_journal">Journal</string>
     <string name="category_lecture">Vorlesung</string>
-    <string name="category_meeting">Meeting</string>
+    <string name="category_meeting">Besprechung</string>
     <string name="category_research">Recherche</string>
     <string name="category_commute">Unterwegs</string>
 
@@ -65,19 +65,11 @@
     <string name="verdict_disputed">Umstritten</string>
     <string name="verdict_needs_check">Prüfen</string>
 
-    <string name="sample_prompt_ev_chip">Testen: E-Auto-Steuercheck</string>
-    <string name="sample_prompt_ev_text">Prüfe die aktuellen Regeln zu E-Auto-Steuervorteilen für 2026 und erinnere mich, am Freitag meinem Steuerberater zu schreiben.</string>
-    <string name="sample_prompt_bio_chip">Testen: Biologie-Vorlesung</string>
-    <string name="sample_prompt_bio_text">Kurze Vorlesungsnotiz: Lichtreaktionen der Photosynthese finden in den Thylakoidmembranen statt; Kapitel 6 vor dem Test am Dienstag wiederholen.</string>
 
     <string name="type_memo_title">Neue Textnotiz</string>
     <string name="type_memo_subtitle">Notiere einen Gedanken, Vorlesungsabschnitt oder eine Behauptung. Gemini strukturiert Aufgaben und prüft Fakten über Google Search.</string>
     <string name="type_memo_placeholder">z. B. Meeting mit dem Designteam morgen um 10 Uhr. Außerdem aktuelle Regeln für E-Auto-Förderungen prüfen.</string>
     <string name="type_memo_submit">Analysieren &amp; speichern</string>
-    <string name="template_ev_label">E-Auto-Prämien</string>
-    <string name="template_ev_prompt">Prüfe die aktuellen Regeln zu E-Auto-Steuergutschriften 2026 und erinnere mich, Leasing vs. Kauf zu vergleichen.</string>
-    <string name="template_meeting_label">Meeting-Notiz</string>
-    <string name="template_meeting_prompt">Produkt-Sync: Android-Beta bis Freitag ausliefern, Maya übernimmt Onboarding-Texte, Play-Store-Fotoauswahlregeln prüfen.</string>
 
     <string name="delete_note_title">Sprachnotiz löschen?</string>
     <string name="delete_note_journal_body">„%1$s“ und der zugehörige KI-Chatverlauf werden dauerhaft aus deinem Cloud-Journal entfernt.</string>
@@ -88,7 +80,7 @@
     <string name="action_cancel">Abbrechen</string>
     <string name="action_type_memo">Notiz tippen</string>
     <string name="action_import_audio">Audio importieren</string>
-    <string name="action_import_short">Import</string>
+    <string name="action_import_short">Importieren</string>
     <string name="action_type_short">Tippen</string>
     <string name="action_fact_check">Mit Google Search prüfen</string>
     <string name="action_reverify">Erneut prüfen</string>
@@ -310,7 +302,7 @@
     <string name="detail_sources_attached_subtitle">%1$d Live-Webquellen angehängt • Wischen oder tippen</string>
     <string name="detail_claims_ready_subtitle">%1$d Aussage(n) bereit zur Prüfung</string>
     <string name="detail_tap_to_verify_subtitle">Tippen zum Abgleich mit der Live-Suche</string>
-    <string name="detail_live_search_grounding">Live Google Search Grounding</string>
+    <string name="detail_live_search_grounding">Live-Faktenprüfung mit Google Suche</string>
     <string name="detail_detected_claims_hint">Erkannte Aussagen &amp; Fragen (antippen zum Einzelcheck):</string>
     <string name="detail_custom_claim_hint">Aussage oder Thema zur Prüfung eingeben…</string>
     <string name="cd_clear_input">Eingabe löschen</string>
@@ -420,7 +412,7 @@
     <string name="review_done_editing_segment">Fertig</string>
     <string name="review_journal_details_title">Details des Journaleintrags</string>
     <string name="review_category_label">Kategorie</string>
-    <string name="review_tags_label">Tags</string>
+    <string name="review_tags_label">Schlagwörter</string>
     <string name="review_add_action_item_hint">Aufgabe hinzufügen…</string>
     <string name="review_action_item_hint">Aufgabe</string>
     <string name="cd_add_action_item">Aufgabe hinzufügen</string>
@@ -477,13 +469,16 @@
     <string name="export_category_prefix">Kategorie: %1$s</string>
     <string name="export_duration_prefix">Dauer: %1$s</string>
     <string name="export_updated_prefix">Aktualisiert: %1$s</string>
-    <string name="export_tags_prefix">Tags: %1$s</string>
+    <string name="export_tags_prefix">Schlagwörter: %1$s</string>
     <string name="export_section_summary">ZUSAMMENFASSUNG</string>
     <string name="export_section_decisions">WICHTIGE ENTSCHEIDUNGEN</string>
     <string name="export_section_actions">AUFGABEN</string>
     <string name="export_section_factcheck">FAKTENPRÜFUNG</string>
     <string name="export_sources_heading">Quellen:</string>
     <string name="export_section_transcript">TRANSKRIPT</string>
+    <string name="export_md_actions">Aufgaben</string>
+    <string name="export_md_factcheck">Faktenprüfung</string>
+    <string name="export_md_sources">Quellen</string>
     <string name="auth_continue_guest">Als Gast fortfahren (Sofortzugang)</string>
     <string name="auth_guest_display_name">Gast-Entdecker</string>
     <string name="onboarding_skip">Überspringen</string>

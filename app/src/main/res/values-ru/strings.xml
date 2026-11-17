@@ -65,19 +65,11 @@
     <string name="verdict_disputed">Оспорено</string>
     <string name="verdict_needs_check">Требует проверки</string>
 
-    <string name="sample_prompt_ev_chip">Пример: налоговый вычет на электромобиль</string>
-    <string name="sample_prompt_ev_text">Проверь актуальные правила федерального налогового вычета на электромобили на 2026 год и напомни написать бухгалтеру в пятницу.</string>
-    <string name="sample_prompt_bio_chip">Пример: конспект по биологии</string>
-    <string name="sample_prompt_bio_text">Краткая заметка с лекции: световые реакции фотосинтеза происходят в мембранах тилакоидов; повторить 6-ю главу до теста во вторник.</string>
 
     <string name="type_memo_title">Новая текстовая заметка</string>
     <string name="type_memo_subtitle">Запишите мысль, фрагмент лекции или факт для проверки. Gemini выделит задачи и сверит данные через Google Поиск.</string>
     <string name="type_memo_placeholder">Например: встреча с командой дизайна завтра в 10:00. Также проверить новые правила налоговых вычетов на электромобили.</string>
     <string name="type_memo_submit">Анализировать и сохранить</string>
-    <string name="template_ev_label">Вычеты на электромобили</string>
-    <string name="template_ev_prompt">Проверь актуальные правила вычетов на электромобили на 2026 год и напомни сравнить лизинг и покупку.</string>
-    <string name="template_meeting_label">Итоги встречи</string>
-    <string name="template_meeting_prompt">Синк по продукту: выпустить бета-версию Android к пятнице, Майя отвечает за тексты онбординга, перепроверить правила фотопикера Play Store.</string>
 
     <string name="delete_note_title">Удалить голосовую заметку?</string>
     <string name="delete_note_journal_body">Заметка «%1$s» и история чата с ИИ будут безвозвратно удалены из облачного дневника.</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">ПРОВЕРКА ФАКТОВ</string>
     <string name="export_sources_heading">Источники:</string>
     <string name="export_section_transcript">РАСШИФРОВКА</string>
+    <string name="export_md_actions">Задачи</string>
+    <string name="export_md_factcheck">Проверка фактов</string>
+    <string name="export_md_sources">Источники</string>
 
     <!-- Onboarding, Quota, Paywall & Guest -->
     <string name="auth_continue_guest">Продолжить как гость (Мгновенный доступ)</string>

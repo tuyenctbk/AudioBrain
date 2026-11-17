@@ -65,19 +65,11 @@
     <string name="verdict_disputed">Ifrågasatt</string>
     <string name="verdict_needs_check">Behöver kollas</string>
 
-    <string name="sample_prompt_ev_chip">Testa: elbilssubvention faktakoll</string>
-    <string name="sample_prompt_ev_text">Kolla de senaste federala reglerna för elbilsrabatt 2026 och påminn mig att mejla min revisor på fredag.</string>
-    <string name="sample_prompt_bio_chip">Testa: biologiföreläsning</string>
-    <string name="sample_prompt_bio_text">Snabb föreläsningsanteckning: fotosyntesens ljusreaktioner sker i tylakoidmembranen; repetera kapitel 6 före tisdagens prov.</string>
 
     <string name="type_memo_title">Nytt textmemo</string>
     <string name="type_memo_subtitle">Skriv ner en tanke, ett föreläsningsutdrag eller ett påstående att kolla. Gemini strukturerar uppgifter och verifierar fakta via Google Sök.</string>
     <string name="type_memo_placeholder">t.ex. Möte med designteamet imorgon kl. 10. Kolla även de senaste reglerna för elbilssubventioner.</string>
     <string name="type_memo_submit">Analysera &amp; Spara</string>
-    <string name="template_ev_label">Elbilssubventioner</string>
-    <string name="template_ev_prompt">Kolla de senaste reglerna för elbilsrabatt för 2026 och påminn mig att jämföra leasing med köp.</string>
-    <string name="template_meeting_label">Mötesreferat</string>
-    <string name="template_meeting_prompt">Produktsynk: släpp Android-beta senast fredag, Maya ansvarar för onboardingtexter och dubbelkolla Play Stores fotoväljarregler.</string>
 
     <string name="delete_note_title">Ta bort röstanteckning?</string>
     <string name="delete_note_journal_body">“%1$s” och dess AI-chatthistorik tas bort permanent från din molndagbok.</string>
@@ -484,6 +476,9 @@
     <string name="export_section_factcheck">FAKTAGRANSKNING</string>
     <string name="export_sources_heading">Källor:</string>
     <string name="export_section_transcript">TRANSKRIPTION</string>
+    <string name="export_md_actions">Åtgärdspunkter</string>
+    <string name="export_md_factcheck">Faktagranskning</string>
+    <string name="export_md_sources">Källor</string>
 
     <!-- Onboarding, Quota, Paywall & Guest -->
     <string name="auth_continue_guest">Fortsätt som gäst (Direktåtkomst)</string>
